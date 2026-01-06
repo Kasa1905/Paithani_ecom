@@ -1,4 +1,4 @@
-import Home from '@/app/user/pages/Home';
+import ProductDetail from '@/app/user/pages/ProductDetail';
 import { UserLayout } from '@/app/shared/layouts/UserLayout';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 
@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <UserLayout>
       <ProtectedRoute>
-        <Home />
+        <ProductDetail />
       </ProtectedRoute>
     </UserLayout>
   );
