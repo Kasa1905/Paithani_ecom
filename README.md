@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Paithani E-Commerce Platform
+
+A modern e-commerce platform built with Next.js for selling premium Paithani sarees. The project features separate user and admin modules with protected routes and mock authentication.
+
+## Project Overview
+
+- **Framework:** Next.js 16.1.1 with TypeScript
+- **Styling:** Tailwind CSS 4
+- **Authentication:** Mock-based (Day 1 - structure phase)
+- **Architecture:** Modular with separate User and Admin spaces
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── user/
+│   │   ├── pages/        # User-facing pages
+│   │   ├── components/   # User-specific components
+│   │   └── routes.tsx    # Route definitions
+│   ├── admin/
+│   │   ├── pages/        # Admin dashboard pages
+│   │   ├── components/   # Admin-specific components
+│   │   └── routes.tsx    # Route definitions
+│   └── shared/
+│       ├── layouts/      # UserLayout, AdminLayout
+│       ├── components/   # Shared components
+│       └── ui/          # UI primitives
+├── auth/                 # Auth guards (ProtectedRoute, AdminRoute)
+├── services/             # API services (future)
+├── lib/                  # Utilities and helpers
+└── styles/              # Global styles
+
+app/                      # Next.js App Router pages
+├── page.tsx            # Home page
+├── collections/        # Collections page
+├── product/[id]/       # Product detail page
+├── cart/               # Shopping cart
+├── checkout/           # Checkout page
+├── order-success/      # Order confirmation
+└── admin/
+    ├── login/          # Admin login (public)
+    ├── dashboard/      # Admin dashboard (protected)
+    ├── products/       # Product management (protected)
+    └── orders/         # Order management (protected)
+```
+
+## Available Routes
+
+### User Routes (Protected)
+- `/` - Home page
+- `/collections` - Browse collections
+- `/product/[id]` - Product details
+- `/cart` - Shopping cart
+- `/checkout` - Checkout page
+- `/order-success` - Order confirmation
+
+### Admin Routes (Isolated & Protected)
+- `/admin/login` - Admin login page (public)
+- `/admin/dashboard` - Admin dashboard (protected)
+- `/admin/products` - Manage products (protected)
+- `/admin/orders` - View orders (protected)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+```bash
+# Install dependencies
+npm install --legacy-peer-deps
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Features (Day 1 - Foundation Phase)
 
-To learn more about Next.js, take a look at the following resources:
+✅ Clean repository structure
+✅ User and Admin module separation
+✅ Protected route boundaries
+✅ Mock authentication (isAuthenticated = true, isAdmin = true)
+✅ UserLayout and AdminLayout components
+✅ All placeholder pages created
+✅ TypeScript support
+✅ Path aliases configured (@/ points to src/)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Authentication
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Currently using mock authentication for Day 1 structure phase:
+- **ProtectedRoute:** Guards user pages, redirects to `/` if not authenticated
+- **AdminRoute:** Guards admin pages, redirects to `/admin/login` if not admin
 
-## Deploy on Vercel
+Mock values:
+```
+isAuthenticated = true
+isAdmin = true
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Next Steps (Future Phases)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [ ] Implement real authentication (JWT/Session)
+- [ ] Connect backend API
+- [ ] Build product catalog
+- [ ] Implement shopping cart logic
+- [ ] Add payment integration
+- [ ] Admin product management
+- [ ] Order management system
+- [ ] UI/UX enhancements
+
+## Technology Stack
+
+- **Frontend:** Next.js, React 19, TypeScript
+- **Styling:** Tailwind CSS 4, PostCSS
+- **Linting:** ESLint
+- **Package Manager:** npm
+
+## License
+
+MIT
+
+## Author
+
+Paithani Team
