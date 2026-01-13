@@ -114,12 +114,16 @@ npm install
 
 3. Create a `.env.local` file in the root directory:
 ```env
-MONGODB_URI=mongodb://localhost:27017/paithani_ecom
-# or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/paithani_ecom
-
+# Copy from .env.example and fill in your actual values
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/paithani_ecom
 JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
+
+**⚠️ SECURITY WARNING:**
+- Never commit `.env.local` or any file with real credentials to git
+- Use `.env.example` for templates (safe to commit)
+- Always use environment variables for sensitive data
 
 4. Start the development server:
 ```bash
