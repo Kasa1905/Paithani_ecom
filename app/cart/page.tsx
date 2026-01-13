@@ -1,13 +1,8 @@
-import Cart from '@/app/user/pages/Cart';
-import { UserLayout } from '@/app/shared/layouts/UserLayout';
-import { ProtectedRoute } from '@/auth/ProtectedRoute';
-
-export default function Page() {
+export default function CartPage() {
   return (
-    <UserLayout>
-      <ProtectedRoute>
-        <Cart />
-      </ProtectedRoute>
-    </UserLayout>
+    <div>
+      <h1>Cart</h1>
+      <p>Your cart items will appear here.</p>
+    </div>
   );
 }

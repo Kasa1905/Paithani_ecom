@@ -1,43 +1,34 @@
-import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import Product from '@/lib/models/Product';
-
-// Mark as dynamic to avoid caching issues in edge environments
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import Product from "@/models/Product";
 
 export async function GET() {
   try {
     await connectDB();
     const products = await Product.find({ isActive: true }).lean();
-    return NextResponse.json(products, { status: 200 });
+    return NextResponse.json({ products }, { status: 200 });
   } catch (error) {
-    console.error('GET /api/products error', error);
+    console.error("GET /api/products error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch products' },
+      { error: "Failed to fetch products" },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    // TODO: replace with real admin auth check
-    const isAdmin = true;
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await connectDB();
 
-    const body = await request.json();
-    const { title, description, price, images, category, isActive = true } = body;
+    const body = await req.json();
+    const { title, description, price, images, category, isActive } = body;
 
     if (!title || !description || typeof price !== 'number' || !category) {
       return NextResponse.json(
-        { error: 'title, description, price, and category are required' },
+        { error: "title, description, price, and category are required" },
         { status: 400 }
       );
     }
-
-    await connectDB();
 
     const product = await Product.create({
       title,
@@ -45,14 +36,14 @@ export async function POST(request: Request) {
       price,
       images: images || [],
       category,
-      isActive,
+      isActive: isActive !== undefined ? isActive : true,
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/products error', error);
+    console.error("POST /api/products error:", error);
     return NextResponse.json(
-      { error: 'Failed to create product' },
+      { error: "Failed to create product" },
       { status: 500 }
     );
   }
