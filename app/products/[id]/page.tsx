@@ -28,6 +28,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [error, setError] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   const fetchProduct = async () => {
     try {
@@ -95,6 +96,53 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (!product) return;
+
+    setPlacingOrder(true);
+    setCartMessage('');
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          items: [{
+            product: product._id,
+            quantity: 1,
+            price: product.price,
+          }],
+          totalAmount: product.price,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please login to place an order');
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to place order');
+      }
+
+      setCartMessage('Order placed successfully!');
+      setTimeout(() => {
+        router.push('/orders');
+      }, 1500);
+    } catch (err) {
+      setCartMessage(err instanceof Error ? err.message : 'Failed to place order');
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
   if (loading) {
     return <UserLayout><div style={{ padding: '20px' }}>Loading product...</div></UserLayout>;
   }
@@ -132,21 +180,39 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <p>{product.description}</p>
         </div>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={addingToCart}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: isAuthenticated ? '#28a745' : '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: addingToCart ? 'wait' : 'pointer',
-            fontSize: '16px',
-          }}
-        >
-          {addingToCart ? 'Adding...' : 'Add to Cart'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+          <button
+            onClick={handleAddToCart}
+            disabled={addingToCart || placingOrder}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: isAuthenticated ? '#28a745' : '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: addingToCart || placingOrder ? 'wait' : 'pointer',
+              fontSize: '16px',
+            }}
+          >
+            {addingToCart ? 'Adding...' : 'Add to Cart'}
+          </button>
+
+          <button
+            onClick={handleBuyNow}
+            disabled={placingOrder || addingToCart}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: isAuthenticated ? '#007bff' : '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: placingOrder || addingToCart ? 'wait' : 'pointer',
+              fontSize: '16px',
+            }}
+          >
+            {placingOrder ? 'Placing Order...' : 'Buy Now'}
+          </button>
+        </div>
 
         {cartMessage && (
           <p style={{ 
