@@ -44,18 +44,21 @@ export default function ProductsPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '20px' }}>Loading products...</div>;
+    return <UserLayout><div style={{ padding: '20px' }}>Loading products...</div></UserLayout>;
   }
 
   if (error) {
     return (
+      <UserLayout>
       <div style={{ padding: '20px', color: 'red' }}>
-        Error: {error}
+        <p>Error: {error}</p>
       </div>
+      </UserLayout>
     );
   }
 
   return (
+    <UserLayout>
     <div style={{ padding: '20px' }}>
       <h1>Products</h1>
       
@@ -101,5 +104,6 @@ export default function ProductsPage() {
         </ul>
       )}
     </div>
+    </UserLayout>
   );
 }

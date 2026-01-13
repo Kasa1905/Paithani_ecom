@@ -18,6 +18,7 @@ const eslintConfig = defineConfig([
       // Disable inline style warnings (not breaking, just a suggestion)
       "@next/next/no-img-element": "off",
       "react/no-unescaped-entities": "off",
+      "@next/next/no-inline-styles": "off",
     },
   },
 ]);
