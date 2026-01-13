@@ -342,11 +342,11 @@ db.users.updateOne(
 Required environment variables in `.env.local`:
 
 ```env
-# MongoDB Connection String
-MONGODB_URI=mongodb://localhost:27017/paithani_ecom
+# MongoDB Connection String (local or Atlas)
+MONGODB_URI=<your-connection-string>
 
-# JWT Secret Key (use a long, random string in production)
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+# JWT Secret Key (generate with: openssl rand -base64 32)
+JWT_SECRET=<your-secret-key>
 ```
 
 ## Technology Highlights
