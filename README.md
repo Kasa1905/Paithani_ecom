@@ -112,18 +112,17 @@ cd Paithani_ecom_Kasa
 npm install
 ```
 
-3. Create a `.env.local` file in the root directory:
+3. Create a `.env.local` file in the root directory with your MongoDB connection string and JWT secret:
 ```env
-# Copy from .env.example and fill in your actual values
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/paithani_ecom
-JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+MONGODB_URI=<your-mongodb-connection-string>
+JWT_SECRET=<your-jwt-secret-key>
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
 **⚠️ SECURITY WARNING:**
 - Never commit `.env.local` or any file with real credentials to git
-- Use `.env.example` for templates (safe to commit)
-- Always use environment variables for sensitive data
+- Get MongoDB URI from https://cloud.mongodb.com/
+- Generate JWT secret with: `openssl rand -base64 32`
 
 4. Start the development server:
 ```bash

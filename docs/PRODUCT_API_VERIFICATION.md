@@ -283,8 +283,8 @@ mongoose.connect(MONGODB_URI, {
 **`.env.local`:** ✅ Configured
 
 ```
-MONGODB_URI=mongodb+srv://[credentials]@[cluster]/paithani?retryWrites=true&w=majority
-JWT_SECRET=supersecretkey123
+MONGODB_URI=<configured-in-local-env>
+JWT_SECRET=<configured-in-local-env>
 ```
 
 **Verification:**
