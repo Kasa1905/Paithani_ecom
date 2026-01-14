@@ -39,8 +39,8 @@ export async function GET() {
   }
 }
 
-// POST /api/orders - Create order from cart, clear cart
-export async function POST() {
+// POST /api/orders - Create order from cart or single product
+export async function POST(req: Request) {
   try {
     await connectDB();
 
@@ -57,43 +57,64 @@ export async function POST() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's cart
-    const cart = await Cart.findOne({ user: userId })
-      .populate({ path: "items.product", model: Product })
-      .lean();
-
-    if (!cart || cart.items.length === 0) {
-      return NextResponse.json(
-        { error: "Cart is empty" },
-        { status: 400 }
-      );
-    }
-
-    // Calculate total amount
+    const body = await req.json();
+    let orderItems: any[] = [];
     let totalAmount = 0;
-    interface CartItem {
-      product: { _id: string; price: number };
-      quantity: number;
-    }
-    const orderItems = cart.items.map((item: CartItem) => {
-      const price = item.product?.price || 0;
-      totalAmount += price * item.quantity;
-      return {
-        product: item.product?._id || item.product,
-        quantity: item.quantity,
-      };
-    });
 
-    // Create order
+    // Check if request body contains direct product order (from "Get it now")
+    if (body.productId && body.quantity) {
+      // Single product order
+      const product = await Product.findById(body.productId).lean();
+      if (!product) {
+        return NextResponse.json(
+          { error: "Product not found" },
+          { status: 404 }
+        );
+      }
+
+      orderItems = [{
+        product: product._id,
+        quantity: body.quantity || 1,
+      }];
+      totalAmount = product.price * (body.quantity || 1);
+    } else {
+      // Order from cart
+      const cart = await Cart.findOne({ user: userId })
+        .populate({ path: "items.product", model: Product })
+        .lean();
+
+      if (!cart || cart.items.length === 0) {
+        return NextResponse.json(
+          { error: "Cart is empty" },
+          { status: 400 }
+        );
+      }
+
+      // Calculate total amount
+      interface CartItem {
+        product: { _id: string; price: number };
+        quantity: number;
+      }
+      orderItems = cart.items.map((item: CartItem) => {
+        const price = item.product?.price || 0;
+        totalAmount += price * item.quantity;
+        return {
+          product: item.product?._id || item.product,
+          quantity: item.quantity,
+        };
+      });
+
+      // Clear cart after creating order from it
+      await Cart.deleteOne({ user: userId });
+    }
+
+    // Create order with "received" status
     const order = await Order.create({
       user: userId,
       items: orderItems,
       totalAmount,
-      status: "pending",
+      status: "received",
     });
-
-    // Clear cart
-    await Cart.deleteOne({ user: userId });
 
     // Return created order with populated data
     const populatedOrder = await Order.findById(order._id)

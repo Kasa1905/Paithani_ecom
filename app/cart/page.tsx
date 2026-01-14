@@ -212,6 +212,10 @@ export default function CartPage() {
                     display: 'flex',
                     gap: '20px',
                     padding: '20px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    marginBottom: '15px',
+                    backgroundColor: '#fff',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                   }}
                 >
@@ -230,7 +234,27 @@ export default function CartPage() {
                         }}
                       />
                     </Link>
-                  </{/* Quantity Controls */}
+                  </div>
+
+                  {/* Product Details */}
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>
+                      <Link 
+                        href={`/products/${item.product._id}`}
+                        style={{ color: '#007bff', textDecoration: 'none' }}
+                      >
+                        {item.product.title}
+                      </Link>
+                    </h3>
+                    <p style={{ color: '#666', marginBottom: '15px', fontSize: '14px' }}>
+                      {item.product.description?.substring(0, 100)}
+                      {item.product.description?.length > 100 ? '...' : ''}
+                    </p>
+                    <p style={{ color: '#333', marginBottom: '15px', fontWeight: '500', fontSize: '16px' }}>
+                      Unit Price: ${item.product.price.toFixed(2)}
+                    </p>
+
+                    {/* Quantity Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ marginRight: '10px', color: '#666', fontSize: '14px' }}>Quantity:</span>
                       <button
@@ -286,6 +310,16 @@ export default function CartPage() {
                   </div>
 
                   {/* Item Total */}
+                  <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                    <p style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>Item Total</p>
+                    <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#28a745' }}>
+                      ${(item.product.price * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Cart Summary */}
             <div
               style={{
@@ -354,40 +388,7 @@ export default function CartPage() {
                   }}
                 >
                   Continue Shopping
-                </Link
-              
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <Link 
-                  href="/products"
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    textDecoration: 'none',
-                    borderRadius: '4px',
-                    display: 'inline-block',
-                    textAlign: 'center',
-                  }}
-                >
-                  Continue Shopping
                 </Link>
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={placingOrder}
-                  style={{
-                    flex: 1,
-                    padding: '12px 24px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: placingOrder ? 'wait' : 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {placingOrder ? 'Placing Order...' : 'Place Order'}
-                </button>
               </div>
             </div>
           </>

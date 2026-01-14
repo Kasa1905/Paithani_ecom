@@ -115,12 +115,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         },
         credentials: 'include',
         body: JSON.stringify({
-          items: [{
-            product: product._id,
-            quantity: 1,
-            price: product.price,
-          }],
-          totalAmount: product.price,
+          productId: product._id,
+          quantity: 1,
         }),
       });
 
@@ -132,9 +128,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         throw new Error(errorData.error || 'Failed to place order');
       }
 
+      const data = await response.json();
       setCartMessage('Order placed successfully!');
       setTimeout(() => {
-        router.push('/orders');
+        router.push(`/checkout?orderId=${data.order._id}`);
       }, 1500);
     } catch (err) {
       setCartMessage(err instanceof Error ? err.message : 'Failed to place order');

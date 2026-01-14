@@ -33,9 +33,39 @@ export async function PATCH(
     const body = await req.json();
     const { status } = body;
 
-    if (!status || !["pending", "paid", "shipped", "cancelled"].includes(status)) {
+    // Valid status transitions
+    const validStatuses = ["received", "confirmed", "packed", "shipped", "delivered", "cancelled"];
+    if (!status || !validStatuses.includes(status)) {
       return NextResponse.json(
-        { error: "Invalid status" },
+        { error: "Invalid status. Valid statuses: " + validStatuses.join(", ") },
+        { status: 400 }
+      );
+    }
+
+    // Get current order to validate transition
+    const currentOrder = await Order.findById(id);
+    if (!currentOrder) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    // Define valid transitions
+    const transitions: Record<string, string[]> = {
+      "received": ["confirmed", "cancelled"],
+      "confirmed": ["packed", "cancelled"],
+      "packed": ["shipped", "cancelled"],
+      "shipped": ["delivered"],
+      "delivered": [],
+      "cancelled": [],
+    };
+
+    // Validate transition
+    const allowedNextStatuses = transitions[currentOrder.status] || [];
+    if (!allowedNextStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: `Cannot transition from '${currentOrder.status}' to '${status}'` },
         { status: 400 }
       );
     }

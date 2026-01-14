@@ -33,11 +33,11 @@ export default function OrdersReceivedPage() {
         throw new Error(body.error || 'Failed to fetch orders');
       }
       const data = await res.json();
-      // Filter only pending orders
-      const pendingOrders = (data.orders || []).filter(
-        (order: Order) => order.status === 'pending'
+      // Filter only received orders
+      const receivedOrders = (data.orders || []).filter(
+        (order: Order) => order.status === 'received'
       );
-      setOrders(pendingOrders);
+      setOrders(receivedOrders);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load orders');
     } finally {
