@@ -58,7 +58,25 @@ export default function CheckoutAddressPage() {
       return;
     }
     fetchCart();
+    fetchUserAddress();
   }, [isAuthenticated, router]);
+
+  const fetchUserAddress = async () => {
+    try {
+      const response = await fetch('/api/user', { credentials: 'include' });
+      if (response.ok) {
+        const data = await parseJsonSafe(response);
+        if (data?.user?.address) {
+          setAddress(prev => ({
+            ...prev,
+            ...data.user.address,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user address:', err);
+    }
+  };
 
   const fetchCart = async () => {
     try {

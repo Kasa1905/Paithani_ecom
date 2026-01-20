@@ -133,7 +133,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setCartMessage('');
 
     try {
-      const response = await fetch('/api/orders', {
+      // Add to cart first
+      const quantity = Math.max(1, Math.min(qty, product.stock));
+      const addResponse = await fetch('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,28 +143,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         credentials: 'include',
         body: JSON.stringify({
           productId: product._id,
-          quantity: Math.max(1, Math.min(qty, product.stock)),
+          quantity,
         }),
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
+      if (!addResponse.ok) {
+        if (addResponse.status === 401) {
           throw new Error('Please login to place an order');
         }
-        const errorData = await parseJsonSafe(response);
-        throw new Error(errorData?.error || 'Failed to place order');
+        const errorData = await parseJsonSafe(addResponse);
+        throw new Error(errorData?.error || 'Failed to add to cart');
       }
 
-      const data = await parseJsonSafe(response);
-      if (!data || !data.order?._id) {
-        throw new Error('Invalid order response');
-      }
-      setCartMessage('Order placed successfully!');
-      setTimeout(() => {
-        router.push(`/checkout?orderId=${data.order._id}`);
-      }, 1500);
+      // Go to checkout address page
+      router.push('/checkout-address');
     } catch (err) {
-      setCartMessage(err instanceof Error ? err.message : 'Failed to place order');
+      setCartMessage(err instanceof Error ? err.message : 'Failed to proceed to checkout');
     } finally {
       setPlacingOrder(false);
     }
