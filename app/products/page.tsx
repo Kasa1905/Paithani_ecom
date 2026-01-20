@@ -11,8 +11,19 @@ interface Product {
   description: string;
   price: number;
   category: string;
-  images: string[];
+  imageUrl: string;
+  images?: string[];
+  stock: number;
+  isOutOfStock: boolean;
 }
+
+const parseJsonSafe = async (response: Response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
 
 export default function ProductsPage() {
   const { isAuthenticated } = useAuth();
@@ -31,11 +42,12 @@ export default function ProductsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        const errData = await parseJsonSafe(response);
+        throw new Error(errData?.error || 'Failed to fetch products');
       }
 
-      const data = await response.json();
-      setProducts(data.products || []);
+      const data = await parseJsonSafe(response);
+      setProducts(data?.products || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
     } finally {
@@ -72,35 +84,46 @@ export default function ProductsPage() {
         <p>No products available</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {products.map((product) => (
-            <li 
-              key={product._id} 
-              style={{ 
-                marginBottom: '15px', 
-                padding: '15px', 
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            >
-              <Link 
-                href={`/products/${product._id}`}
+          {products.map((product) => {
+            const outOfStock = product.isOutOfStock || product.stock <= 0;
+            return (
+              <li 
+                key={product._id} 
                 style={{ 
-                  textDecoration: 'none', 
-                  color: '#333',
-                  display: 'block'
+                  marginBottom: '15px', 
+                  padding: '15px', 
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  opacity: outOfStock ? 0.5 : 1,
+                  pointerEvents: outOfStock ? 'none' : 'auto',
+                  backgroundColor: outOfStock ? '#f5f5f5' : 'transparent',
                 }}
               >
-                <h3 style={{ margin: '0 0 10px 0' }}>{product.title}</h3>
-                <p style={{ margin: '0 0 10px 0', color: '#666' }}>
-                  {product.description.substring(0, 100)}
-                  {product.description.length > 100 ? '...' : ''}
-                </p>
-                <p style={{ margin: 0, fontWeight: 'bold', color: '#28a745' }}>
-                  ${product.price.toFixed(2)}
-                </p>
-              </Link>
-            </li>
-          ))}
+                <Link 
+                  href={`/products/${product._id}`}
+                  style={{ 
+                    textDecoration: 'none', 
+                    color: '#333',
+                    display: 'block'
+                  }}
+                >
+                  <h3 style={{ margin: '0 0 10px 0' }}>{product.title}</h3>
+                  <p style={{ margin: '0 0 10px 0', color: '#666' }}>
+                    {product.description.substring(0, 100)}
+                    {product.description.length > 100 ? '...' : ''}
+                  </p>
+                  <p style={{ margin: 0, fontWeight: 'bold', color: '#28a745' }}>
+                    ₹{product.price.toFixed(2)}
+                  </p>
+                </Link>
+                {outOfStock && (
+                  <p style={{ margin: '10px 0 0 0', color: '#dc3545', fontWeight: 600 }}>
+                    Out of Stock
+                  </p>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

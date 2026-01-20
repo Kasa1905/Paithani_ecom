@@ -5,7 +5,8 @@ import Product from "@/models/Product";
 export async function GET() {
   try {
     await connectDB();
-    const products = await Product.find({ isActive: true }).lean();
+    // Show products regardless of stock; isActive still respected for manual disables
+    const products = await Product.find({}).lean();
     return NextResponse.json({ products }, { status: 200 });
   } catch (error) {
     console.error("GET /api/products error:", error);
@@ -21,11 +22,19 @@ export async function POST(req: Request) {
     await connectDB();
 
     const body = await req.json();
-    const { title, description, price, images, category, isActive } = body;
+    const { title, description, price, images, category, isActive, stock } = body;
 
     if (!title || !description || typeof price !== 'number' || !category) {
       return NextResponse.json(
         { error: "title, description, price, and category are required" },
+        { status: 400 }
+      );
+    }
+
+    const parsedStock = stock !== undefined ? Number(stock) : 0;
+    if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+      return NextResponse.json(
+        { error: "stock must be a non-negative integer" },
         { status: 400 }
       );
     }
@@ -36,6 +45,8 @@ export async function POST(req: Request) {
       price,
       images: images || [],
       category,
+      stock: parsedStock,
+      isOutOfStock: parsedStock === 0,
       isActive: isActive !== undefined ? isActive : true,
     });
 

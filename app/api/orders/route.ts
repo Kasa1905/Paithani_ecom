@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
@@ -5,8 +6,11 @@ import { verifyToken } from "@/lib/jwt";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
+import { archiveEligibleOrders, getActiveOrdersFilter } from "@/lib/archiveOrders";
+import { validateStockAvailability } from "@/lib/stockOperations";
 
-// GET /api/orders - Returns user's orders sorted newest first
+// GET /api/orders - Returns user's ACTIVE orders (non-archived) sorted newest first
+// Automatically archives eligible orders (15+ days after delivery) before fetching
 export async function GET() {
   try {
     await connectDB();
@@ -24,7 +28,14 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const orders = await Order.find({ user: userId })
+    // LAZY ARCHIVING: Automatically archive orders that are 15+ days after delivery
+    await archiveEligibleOrders();
+
+    // Fetch only ACTIVE orders (non-archived)
+    const orders = await Order.find({ 
+      user: userId, 
+      ...getActiveOrdersFilter() 
+    })
       .populate({ path: "items.product", model: Product })
       .sort({ createdAt: -1 })
       .lean();
@@ -40,6 +51,8 @@ export async function GET() {
 }
 
 // POST /api/orders - Create order from cart or single product
+// IMPORTANT: Stock is NOT deducted here - only validated
+// Stock is deducted ONLY when admin confirms order (received → confirmed)
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -58,70 +71,138 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    let orderItems: any[] = [];
-    let totalAmount = 0;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Check if request body contains direct product order (from "Get it now")
-    if (body.productId && body.quantity) {
-      // Single product order
-      const product = await Product.findById(body.productId).lean();
-      if (!product) {
-        return NextResponse.json(
-          { error: "Product not found" },
-          { status: 404 }
-        );
+    try {
+      let orderItems: any[] = [];
+      let totalAmount = 0;
+
+      // Check if request body contains direct product order (from "Get it now")
+      if (body.productId && body.quantity) {
+        const quantity = Math.max(1, Number(body.quantity) || 1);
+        const product = await Product.findById(body.productId).session(session);
+        
+        if (!product) {
+          await session.abortTransaction();
+          return NextResponse.json(
+            { error: "Product not found" },
+            { status: 404 }
+          );
+        }
+
+        // Validate stock availability (does NOT deduct stock)
+        const stockCheck = await validateStockAvailability([
+          { product: body.productId, quantity }
+        ]);
+
+        if (!stockCheck.available) {
+          await session.abortTransaction();
+          return NextResponse.json(
+            { 
+              error: stockCheck.error || "Insufficient stock",
+              failedProduct: stockCheck.failedProduct
+            },
+            { status: 400 }
+          );
+        }
+
+        orderItems = [
+          {
+            product: product._id,
+            quantity,
+          },
+        ];
+        totalAmount = product.price * quantity;
+      } else {
+        // Order from cart
+        const cart = await Cart.findOne({ user: userId })
+          .populate({ path: "items.product", model: Product })
+          .session(session);
+
+        if (!cart || cart.items.length === 0) {
+          await session.abortTransaction();
+          return NextResponse.json(
+            { error: "Cart is empty" },
+            { status: 400 }
+          );
+        }
+
+        // Build order items and validate stock
+        const itemsToValidate: Array<{ product: string; quantity: number }> = [];
+        
+        for (const item of cart.items) {
+          const quantity = Math.max(1, Number(item.quantity) || 1);
+          const productId = item.product?._id || item.product;
+          const product = await Product.findById(productId).session(session);
+          
+          if (!product) {
+            await session.abortTransaction();
+            return NextResponse.json(
+              { error: "One or more products not found" },
+              { status: 404 }
+            );
+          }
+
+          itemsToValidate.push({ product: String(productId), quantity });
+          totalAmount += (product.price || 0) * quantity;
+          orderItems.push({ product: product._id, quantity });
+        }
+
+        // Validate stock availability (does NOT deduct stock)
+        const stockCheck = await validateStockAvailability(itemsToValidate);
+
+        if (!stockCheck.available) {
+          await session.abortTransaction();
+          return NextResponse.json(
+            { 
+              error: stockCheck.error || "Insufficient stock for one or more items",
+              failedProduct: stockCheck.failedProduct
+            },
+            { status: 400 }
+          );
+        }
+
+        // Clear cart after validation
+        await Cart.deleteOne({ user: userId }).session(session);
       }
 
-      orderItems = [{
-        product: product._id,
-        quantity: body.quantity || 1,
-      }];
-      totalAmount = product.price * (body.quantity || 1);
-    } else {
-      // Order from cart
-      const cart = await Cart.findOne({ user: userId })
+      // Create order with "received" status and "pending" payment
+      // Stock is NOT deducted yet - will be deducted when admin confirms
+      const order = await Order.create(
+        [
+          {
+            user: userId,
+            items: orderItems,
+            totalAmount,
+            status: "received",
+            payment: {
+              status: "pending",
+            },
+          },
+        ],
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      // Return created order with populated data
+      const populatedOrder = await Order.findById(order[0]._id)
         .populate({ path: "items.product", model: Product })
         .lean();
 
-      if (!cart || cart.items.length === 0) {
-        return NextResponse.json(
-          { error: "Cart is empty" },
-          { status: 400 }
-        );
-      }
+      return NextResponse.json({ order: populatedOrder }, { status: 201 });
+    } catch (err) {
+      await session.abortTransaction();
 
-      // Calculate total amount
-      interface CartItem {
-        product: { _id: string; price: number };
-        quantity: number;
-      }
-      orderItems = cart.items.map((item: CartItem) => {
-        const price = item.product?.price || 0;
-        totalAmount += price * item.quantity;
-        return {
-          product: item.product?._id || item.product,
-          quantity: item.quantity,
-        };
-      });
-
-      // Clear cart after creating order from it
-      await Cart.deleteOne({ user: userId });
+      console.error("POST /api/orders error (transaction):", err);
+      return NextResponse.json(
+        { error: "Failed to create order" },
+        { status: 500 }
+      );
+    } finally {
+      session.endSession();
     }
-
-    // Create order with "received" status
-    const order = await Order.create({
-      user: userId,
-      items: orderItems,
-      totalAmount,
-      status: "received",
-    });
-
-    // Return created order with populated data
-    const populatedOrder = await Order.findById(order._id)
-      .populate({ path: "items.product", model: Product })
-      .lean();
-
-    return NextResponse.json({ order: populatedOrder }, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders error:", error);
     return NextResponse.json(

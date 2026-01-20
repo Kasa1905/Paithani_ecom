@@ -13,8 +13,19 @@ interface Product {
   description: string;
   price: number;
   category: string;
-  images: string[];
+  imageUrl: string;
+  images?: string[];
+  stock: number;
+  isOutOfStock: boolean;
 }
+
+const parseJsonSafe = async (response: Response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { isAuthenticated } = useAuth();
@@ -29,6 +40,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [qty, setQty] = useState<number>(1);
 
   const fetchProduct = async () => {
     try {
@@ -40,11 +52,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         if (response.status === 404) {
           throw new Error('Product not found');
         }
-        throw new Error('Failed to fetch product');
+        const errData = await parseJsonSafe(response);
+        throw new Error(errData?.error || 'Failed to fetch product');
       }
 
-      const data = await response.json();
-      setProduct(data.product);
+      const data = await parseJsonSafe(response);
+      setProduct(data?.product || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load product');
     } finally {
@@ -63,6 +76,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       return;
     }
 
+    if (!product || product.isOutOfStock || product.stock <= 0) {
+      setCartMessage('Out of stock');
+      return;
+    }
+
+    // Clamp quantity to available stock
+    const quantity = Math.max(1, Math.min(qty, product.stock));
+
     setAddingToCart(true);
     setCartMessage('');
 
@@ -75,7 +96,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         credentials: 'include',
         body: JSON.stringify({
           productId: productId,
-          quantity: 1,
+          quantity,
         }),
       });
 
@@ -83,7 +104,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         if (response.status === 401) {
           throw new Error('Please login to add items to cart');
         }
-        throw new Error('Failed to add to cart');
+        const errorData = await parseJsonSafe(response);
+        throw new Error(errorData?.error || 'Failed to add to cart');
       }
 
       setCartMessage('Added to cart successfully!');
@@ -102,7 +124,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       return;
     }
 
-    if (!product) return;
+    if (!product || product.isOutOfStock || product.stock <= 0) {
+      setCartMessage('Out of stock');
+      return;
+    }
 
     setPlacingOrder(true);
     setCartMessage('');
@@ -116,7 +141,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         credentials: 'include',
         body: JSON.stringify({
           productId: product._id,
-          quantity: 1,
+          quantity: Math.max(1, Math.min(qty, product.stock)),
         }),
       });
 
@@ -124,11 +149,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         if (response.status === 401) {
           throw new Error('Please login to place an order');
         }
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to place order');
+        const errorData = await parseJsonSafe(response);
+        throw new Error(errorData?.error || 'Failed to place order');
       }
 
-      const data = await response.json();
+      const data = await parseJsonSafe(response);
+      if (!data || !data.order?._id) {
+        throw new Error('Invalid order response');
+      }
       setCartMessage('Order placed successfully!');
       setTimeout(() => {
         router.push(`/checkout?orderId=${data.order._id}`);
@@ -155,6 +183,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
+  const outOfStock = product.isOutOfStock || product.stock <= 0;
+
   return (
     <UserLayout>
       <div style={{ padding: '20px', maxWidth: '800px' }}>
@@ -164,8 +194,32 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         <h1>{product.title}</h1>
         
+        {product.imageUrl && (
+          <div style={{ marginBottom: '20px' }}>
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'cover',
+                borderRadius: '4px',
+                border: '1px solid #ddd',
+              }}
+            />
+          </div>
+        )}
+        
         <p style={{ fontSize: '24px', color: '#28a745', fontWeight: 'bold', margin: '20px 0' }}>
-          ${product.price.toFixed(2)}
+          ₹{product.price.toFixed(2)}
+        </p>
+
+        <p style={{ margin: '6px 0', fontWeight: 600, color: outOfStock ? '#dc3545' : '#28a745' }}>
+          {outOfStock
+            ? 'Out of stock'
+            : product.stock < 5
+              ? `Only ${product.stock} left`
+              : 'In stock'}
         </p>
 
         <p style={{ color: '#666', marginBottom: '10px' }}>
@@ -178,16 +232,32 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label htmlFor="qty" style={{ color: '#333' }}>Qty</label>
+            <input
+              id="qty"
+              type="number"
+              min={1}
+              max={product.stock}
+              value={qty}
+              onChange={(e) => {
+                const val = Math.floor(Number(e.target.value) || 1);
+                setQty(Math.max(1, Math.min(val, product.stock)));
+              }}
+              style={{ width: '70px', padding: '8px' }}
+              disabled={outOfStock}
+            />
+          </div>
           <button
             onClick={handleAddToCart}
-            disabled={addingToCart || placingOrder}
+            disabled={addingToCart || placingOrder || outOfStock}
             style={{
               padding: '12px 24px',
-              backgroundColor: isAuthenticated ? '#28a745' : '#6c757d',
+              backgroundColor: outOfStock ? '#6c757d' : isAuthenticated ? '#28a745' : '#6c757d',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: addingToCart || placingOrder ? 'wait' : 'pointer',
+              cursor: addingToCart || placingOrder || outOfStock ? 'not-allowed' : 'pointer',
               fontSize: '16px',
             }}
           >
@@ -196,20 +266,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
           <button
             onClick={handleBuyNow}
-            disabled={placingOrder || addingToCart}
+            disabled={placingOrder || addingToCart || outOfStock}
             style={{
               padding: '12px 24px',
-              backgroundColor: isAuthenticated ? '#007bff' : '#6c757d',
+              backgroundColor: outOfStock ? '#6c757d' : isAuthenticated ? '#007bff' : '#6c757d',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: placingOrder || addingToCart ? 'wait' : 'pointer',
+              cursor: placingOrder || addingToCart || outOfStock ? 'not-allowed' : 'pointer',
               fontSize: '16px',
             }}
           >
             {placingOrder ? 'Placing Order...' : 'Buy Now'}
           </button>
         </div>
+
+        {outOfStock && (
+          <p style={{ marginTop: '8px', color: '#dc3545' }}>
+            This item is currently out of stock.
+          </p>
+        )}
 
         {cartMessage && (
           <p style={{ 

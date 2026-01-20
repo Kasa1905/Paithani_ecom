@@ -15,11 +15,9 @@ const globalWithMongoose = global as typeof global & {
   mongoose?: CachedConnection;
 };
 
-let cached = globalWithMongoose.mongoose;
-
-if (!cached) {
-  cached = globalWithMongoose.mongoose = { conn: null, promise: null };
-}
+const cached: CachedConnection =
+  globalWithMongoose.mongoose ||
+  (globalWithMongoose.mongoose = { conn: null, promise: null });
 
 async function connectDB() {
   if (cached.conn) {

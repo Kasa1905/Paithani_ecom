@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
+import connectDB from '@/lib/mongodb';
 import SiteSettings from '@/models/SiteSettings';
 
 // GET /api/settings - Public route to fetch site settings

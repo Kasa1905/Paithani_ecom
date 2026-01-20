@@ -43,7 +43,7 @@ export async function GET() {
 }
 
 // POST /api/cart - Requires auth, body: { productId, quantity }
-// If product exists in cart, increment quantity; else add. Creates cart if missing.
+// Validates stock before adding. If product exists in cart, increment quantity; else add.
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -78,9 +78,37 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate product exists and has stock
+    const product = await Product.findById(productId).lean();
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
     const qty = typeof quantity === "number" && quantity > 0 ? quantity : 1;
 
+    // Check if adding this quantity would exceed available stock
     let cart = await Cart.findOne({ user: userId });
+    let existingQty = 0;
+    if (cart) {
+      const idx = cart.items.findIndex(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (item: any) => item.product.toString() === productId
+      );
+      if (idx >= 0) {
+        existingQty = cart.items[idx].quantity;
+      }
+    }
+
+    const totalQty = existingQty + qty;
+    if (totalQty > product.stock) {
+      return NextResponse.json(
+        { error: `Only ${product.stock} items available in stock` },
+        { status: 400 }
+      );
+    }
 
     if (!cart) {
       cart = await Cart.create({
@@ -117,7 +145,7 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT /api/cart - Update quantity of a cart item
+// PUT /api/cart - Update quantity of a cart item (validates stock)
 export async function PUT(req: Request) {
   try {
     await connectDB();
@@ -140,7 +168,23 @@ export async function PUT(req: Request) {
 
     if (!productId || typeof quantity !== "number" || quantity < 1) {
       return NextResponse.json(
-        { error: "Valid productId and quantity are required" },
+        { error: "Valid productId and quantity (>= 1) are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate product exists and has sufficient stock
+    const product = await Product.findById(productId).lean();
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    if (quantity > product.stock) {
+      return NextResponse.json(
+        { error: `Only ${product.stock} items available in stock` },
         { status: 400 }
       );
     }

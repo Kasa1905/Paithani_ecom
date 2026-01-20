@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { connectDB } from '@/lib/db';
+import connectDB from '@/lib/mongodb';
 import { verifyToken } from '@/lib/jwt';
 import SiteSettings from '@/models/SiteSettings';
 

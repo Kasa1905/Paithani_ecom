@@ -1,0 +1,35 @@
+/* Admin login styles using CSS Modules to avoid hydration mismatches */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+}
+
+.card {
+  max-width: 400px;
+  width: 100%;
+  padding: 40px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.field { margin-bottom: 20px; }
+.label { display: block; margin-bottom: 5px; }
+.input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+
+.error { margin-bottom: 20px; padding: 10px; background-color: #fee; color: #c00; border-radius: 4px; }
+
+.submit { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+.submit:disabled { cursor: wait; }
+
+.center { margin-top: 20px; text-align: center; }
+.link { color: #007bff; }

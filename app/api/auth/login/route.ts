@@ -20,6 +20,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
+    // Check if user has verified email
+    if (!user.isEmailVerified) {
+      return NextResponse.json(
+        { 
+          message: "Please verify your email first",
+          userId: user._id,
+          email: user.email,
+          requiresVerification: true
+        },
+        { status: 403 } // Forbidden until verified
+      );
+    }
+
     const token = signToken({
       id: user._id,
       email: user.email,
@@ -31,7 +44,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
 
-    // 🔴 THIS PART MATTERS
+    // Set auth token cookie
     response.cookies.set({
       name: "auth_token",
       value: token,
@@ -50,3 +63,4 @@ export async function POST(req: Request) {
     );
   }
 }
+ 

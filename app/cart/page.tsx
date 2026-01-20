@@ -12,11 +12,21 @@ interface CartItem {
     _id: string;
     title: string;
     price: number;
+    imageUrl: string;
     images: string[];
     description: string;
+    stock: number;
   };
   quantity: number;
 }
+
+const parseJsonSafe = async (response: Response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
 
 export default function CartPage() {
   const { isAuthenticated } = useAuth();
@@ -39,11 +49,12 @@ export default function CartPage() {
           router.push('/login');
           return;
         }
-        throw new Error('Failed to fetch cart');
+        const errData = await parseJsonSafe(response);
+        throw new Error(errData?.error || 'Failed to fetch cart');
       }
 
-      const data = await response.json();
-      setCartItems(data.items || []);
+      const data = await parseJsonSafe(response);
+      setCartItems(data?.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load cart');
     } finally {
@@ -60,28 +71,41 @@ export default function CartPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const updateQuantity = async (productId: string, newQuantity: number) => {
+  const updateQuantity = async (productId: string, newQuantity: number, maxStock: number) => {
     if (newQuantity < 1) return;
 
+    // Cap quantity at available stock
+    const cappedQuantity = Math.min(newQuantity, maxStock);
+
+    // If user tried to exceed stock, show friendly message
+    if (newQuantity > maxStock) {
+      setError(`Only ${maxStock} items available in stock`);
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
     setUpdatingItem(productId);
+    setError('');
+    
     try {
       const response = await fetch('/api/cart', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ productId, quantity: newQuantity }),
+        body: JSON.stringify({ productId, quantity: cappedQuantity }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update quantity');
+        const errorData = await parseJsonSafe(response);
+        throw new Error(errorData?.error || 'Failed to update quantity');
       }
 
       await fetchCart();
       await refreshCartCount();
     } catch (err) {
       console.error('Error updating quantity:', err);
-      alert(err instanceof Error ? err.message : 'Failed to update quantity');
+      setError(err instanceof Error ? err.message : 'Failed to update quantity');
+      setTimeout(() => setError(''), 5000);
     } finally {
       setUpdatingItem(null);
     }
@@ -98,15 +122,16 @@ export default function CartPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove item');
+        const errorData = await parseJsonSafe(response);
+        throw new Error(errorData?.error || 'Failed to remove item');
       }
 
       await fetchCart();
       await refreshCartCount();
     } catch (err) {
       console.error('Error removing item:', err);
-      alert(err instanceof Error ? err.message : 'Failed to remove item');
+      setError(err instanceof Error ? err.message : 'Failed to remove item');
+      setTimeout(() => setError(''), 5000);
     } finally {
       setUpdatingItem(null);
     }
@@ -146,8 +171,8 @@ export default function CartPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to place order');
+        const errorData = await parseJsonSafe(response);
+        throw new Error(errorData?.error || 'Failed to place order');
       }
 
       await refreshCartCount();
@@ -223,7 +248,7 @@ export default function CartPage() {
                   <div style={{ flexShrink: 0 }}>
                     <Link href={`/products/${item.product._id}`}>
                       <img
-                        src={item.product.images?.[0] || '/placeholder-product.jpg'}
+                        src={item.product.imageUrl || '/placeholder-product.jpg'}
                         alt={item.product.title}
                         style={{
                           width: '120px',
@@ -251,14 +276,14 @@ export default function CartPage() {
                       {item.product.description?.length > 100 ? '...' : ''}
                     </p>
                     <p style={{ color: '#333', marginBottom: '15px', fontWeight: '500', fontSize: '16px' }}>
-                      Unit Price: ${item.product.price.toFixed(2)}
+                      Unit Price: ₹{item.product.price.toFixed(2)}
                     </p>
 
                     {/* Quantity Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ marginRight: '10px', color: '#666', fontSize: '14px' }}>Quantity:</span>
                       <button
-                        onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.product._id, item.quantity - 1, item.product.stock)}
                         disabled={updatingItem === item.product._id || item.quantity <= 1}
                         style={{
                           padding: '6px 14px',
@@ -276,20 +301,25 @@ export default function CartPage() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                        disabled={updatingItem === item.product._id}
+                        onClick={() => updateQuantity(item.product._id, item.quantity + 1, item.product.stock)}
+                        disabled={updatingItem === item.product._id || item.quantity >= item.product.stock}
                         style={{
                           padding: '6px 14px',
-                          backgroundColor: '#fff',
+                          backgroundColor: item.quantity >= item.product.stock ? '#f0f0f0' : '#fff',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
-                          cursor: updatingItem === item.product._id ? 'wait' : 'pointer',
+                          cursor: updatingItem === item.product._id ? 'wait' : item.quantity >= item.product.stock ? 'not-allowed' : 'pointer',
                           fontSize: '16px',
                           fontWeight: 'bold',
                         }}
                       >
                         +
                       </button>
+                      {item.quantity >= item.product.stock && (
+                        <span style={{ marginLeft: '10px', color: '#dc3545', fontSize: '12px' }}>
+                          Max stock reached
+                        </span>
+                      )}
                       <button
                         onClick={() => removeItem(item.product._id)}
                         disabled={updatingItem === item.product._id}
@@ -313,7 +343,7 @@ export default function CartPage() {
                   <div style={{ textAlign: 'right', minWidth: '120px' }}>
                     <p style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>Item Total</p>
                     <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#28a745' }}>
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      ₹{(item.product.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -336,7 +366,7 @@ export default function CartPage() {
               <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ fontSize: '16px', color: '#666' }}>Subtotal ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
-                  <span style={{ fontSize: '16px', fontWeight: '500' }}>${calculateTotal().toFixed(2)}</span>
+                  <span style={{ fontSize: '16px', fontWeight: '500' }}>₹{calculateTotal().toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ fontSize: '16px', color: '#666' }}>Shipping</span>
@@ -346,7 +376,7 @@ export default function CartPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px' }}>
                 <h3 style={{ fontSize: '20px' }}>Total:</h3>
-                <h3 style={{ fontSize: '28px', color: '#28a745', fontWeight: 'bold' }}>${calculateTotal().toFixed(2)}</h3>
+                <h3 style={{ fontSize: '28px', color: '#28a745', fontWeight: 'bold' }}>₹{calculateTotal().toFixed(2)}</h3>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

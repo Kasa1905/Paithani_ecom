@@ -5,8 +5,10 @@ import { verifyToken } from "@/lib/jwt";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import User from "@/models/User";
+import { archiveEligibleOrders, getActiveOrdersFilter } from "@/lib/archiveOrders";
 
-// GET /api/admin/orders - Returns all orders (admin only)
+// GET /api/admin/orders - Returns all ACTIVE orders (non-archived) for admin
+// Automatically archives eligible orders (15+ days after delivery) before fetching
 export async function GET() {
   try {
     await connectDB();
@@ -30,7 +32,11 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const orders = await Order.find()
+    // LAZY ARCHIVING: Automatically archive orders that are 15+ days after delivery
+    await archiveEligibleOrders();
+
+    // Fetch only ACTIVE orders (non-archived)
+    const orders = await Order.find(getActiveOrdersFilter())
       .populate({ path: "user", model: User })
       .populate({ path: "items.product", model: Product })
       .sort({ createdAt: -1 })

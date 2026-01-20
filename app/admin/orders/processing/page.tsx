@@ -107,7 +107,7 @@ export default function OrdersProcessingPage() {
               <li key={order._id}>
                 <div>Order ID: {order._id}</div>
                 <div>User: {order.user?.email || 'N/A'}</div>
-                <div>Total: ${order.totalAmount?.toFixed(2)}</div>
+                <div>Total: ₹{order.totalAmount?.toFixed(2)}</div>
                 <div>Status: {order.status}</div>
                 <div>Created: {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
                 <div>

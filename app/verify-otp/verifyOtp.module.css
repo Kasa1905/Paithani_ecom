@@ -1,0 +1,100 @@
+/* Styles for Verify OTP page to avoid inline style hydration mismatches */
+
+.container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+}
+
+.redirect {
+  padding: 20px;
+  text-align: center;
+}
+
+.fallback {
+  padding: 20px;
+  text-align: center;
+}
+
+.infoText {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.errorBox {
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #fee;
+  color: #c00;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+}
+
+.field {
+  margin-bottom: 15px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  font-size: 20px;
+  letter-spacing: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.helperText {
+  color: #666;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submitBtn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.resendWrapper {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+  opacity: 1;
+}
+
+.resendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.backLink {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.link {
+  color: #007bff;
+}

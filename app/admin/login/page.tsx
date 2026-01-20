@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import styles from './adminLogin.module.css';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -30,10 +31,6 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Login failed');
       }
 
-      if (data.user.role !== 'admin') {
-        throw new Error('Access denied: Admin privileges required');
-      }
-
       router.push('/admin/orders');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -43,47 +40,39 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f5f5' }}>
-      <div style={{ maxWidth: '400px', width: '100%', padding: '40px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Admin Login</h1>
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Admin Login</h1>
         
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="admin-email">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '16px',
-              }}
+              id="admin-email"
+              placeholder="admin@example.com"
+              className={styles.input}
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Password</label>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="admin-password">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '16px',
-              }}
+              id="admin-password"
+              placeholder="••••••••"
+              className={styles.input}
             />
           </div>
 
           {error && (
-            <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#fee', color: '#c00', borderRadius: '4px' }}>
+            <div className={styles.error}>
               {error}
             </div>
           )}
@@ -91,23 +80,14 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              cursor: loading ? 'wait' : 'pointer',
-            }}
+            className={styles.submit}
           >
             {loading ? 'Logging in...' : 'Login as Admin'}
           </button>
         </form>
 
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Link href="/login" style={{ color: '#007bff' }}>
+        <div className={styles.center}>
+          <Link href="/login" className={styles.link}>
             User Login
           </Link>
         </div>

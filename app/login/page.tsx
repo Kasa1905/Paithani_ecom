@@ -4,12 +4,22 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import styles from './login.module.css';
+
+const parseJsonSafe = async (response: Response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
 
 export default function LoginPage() {
   const { refreshUser, isAuthenticated } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -39,8 +49,8 @@ export default function LoginPage() {
         await refreshUser();
         router.push('/');
       } else {
-        const data = await response.json();
-        setError(data.message || 'Login failed');
+        const data = await parseJsonSafe(response);
+        setError(data?.message || 'Login failed');
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -51,25 +61,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
+    <div className={styles.container}>
       <h1>Login</h1>
 
       {error && (
-        <div style={{ 
-          padding: '10px', 
-          marginBottom: '15px', 
-          backgroundColor: '#fee', 
-          color: '#c00',
-          border: '1px solid #fcc',
-          borderRadius: '4px'
-        }}>
+        <div className={styles.errorBox}>
           {error}
         </div>
       )}
 
       <form onSubmit={handleLogin}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>
+        <div className={styles.field}>
+          <label className={styles.label}>
             Email:
           </label>
           <input
@@ -77,54 +80,47 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ 
-              width: '100%', 
-              padding: '8px', 
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
+            className={styles.input}
             placeholder="your@email.com"
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>
+        <div className={styles.field}>
+          <label className={styles.label}>
             Password:
           </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ 
-              width: '100%', 
-              padding: '8px', 
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
-            placeholder="••••••••"
-          />
+          <div className={styles.passwordWrapper}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={styles.input}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className={styles.toggleBtn}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          style={{ 
-            width: '100%', 
-            padding: '10px', 
-            backgroundColor: loading ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
+          className={styles.submitBtn}
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
 
-      <p style={{ marginTop: '20px', textAlign: 'center' }}>
-        Don't have an account? <Link href="/register" style={{ color: '#007bff' }}>Register</Link>
+      <p className={styles.registerText}>
+        Don't have an account? <Link href="/register" className={styles.link}>Register</Link>
       </p>
     </div>
   );

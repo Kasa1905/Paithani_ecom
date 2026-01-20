@@ -112,10 +112,17 @@ cd Paithani_ecom_Kasa
 npm install
 ```
 
-3. Create a `.env.local` file in the root directory with your MongoDB connection string and JWT secret:
+3. Create a `.env.local` file in the root directory with required credentials:
 ```env
 MONGODB_URI=<your-mongodb-connection-string>
 JWT_SECRET=<your-jwt-secret-key>
+RAZORPAY_KEY_ID=<your-razorpay-key-id>
+RAZORPAY_KEY_SECRET=<your-razorpay-key-secret>
+CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
+CLOUDINARY_API_KEY=<your-cloudinary-api-key>
+CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
+# Optional: override default folder
+# CLOUDINARY_UPLOAD_FOLDER=paithani-ecom
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
@@ -123,6 +130,15 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 - Never commit `.env.local` or any file with real credentials to git
 - Get MongoDB URI from https://cloud.mongodb.com/
 - Generate JWT secret with: `openssl rand -base64 32`
+- Get Razorpay keys from https://dashboard.razorpay.com/
+
+**Getting Razorpay Keys:**
+1. Visit [Razorpay Dashboard](https://dashboard.razorpay.com/)
+2. Sign up for an account (free)
+3. Go to Settings → API Keys
+4. Copy Key ID (public key) and Key Secret (private key)
+5. Use **Test Mode** keys for development (press Toggle on dashboard)
+6. Use **Live Mode** keys for production
 
 4. Start the development server:
 ```bash
@@ -191,6 +207,17 @@ npm start
 - `POST /api/orders` - Create new order
   - Body: `{ items: [{ product, quantity, price }], totalAmount }`
   - Returns: `{ message, order }`
+
+#### Payments (Razorpay)
+- `POST /api/checkout` - Create Razorpay order for payment
+  - Body: `{ orderId: string }`
+  - Returns: `{ razorpayOrderId, amount, currency, keyId, internalOrderId }`
+  - Note: Creates order in "received" status, waiting for payment
+  
+- `POST /api/payment/verify` - Verify Razorpay payment and confirm order
+  - Body: `{ razorpayOrderId, razorpayPaymentId, razorpaySignature, internalOrderId }`
+  - Returns: `{ success: true, message: string, order: {...} }`
+  - Note: Updates order status to "confirmed" after successful payment
 
 ### Protected Admin Routes
 
@@ -382,7 +409,10 @@ JWT_SECRET=<your-secret-key>
 - No pagination for products/orders
 - No search or filtering on products
 - No email notifications for orders
-- No payment integration
+
+## Features Implemented Recently
+
+- ✅ **Payment Integration (Razorpay)** - Full payment processing with signature verification
 
 ## Future Enhancements
 
@@ -392,7 +422,6 @@ JWT_SECRET=<your-secret-key>
 - [ ] Pagination for large datasets
 - [ ] Product search and filtering
 - [ ] Email notifications (order confirmation, status updates)
-- [ ] Payment integration (Stripe/Razorpay)
 - [ ] Order tracking for users
 - [ ] Product reviews and ratings
 - [ ] Wishlist functionality

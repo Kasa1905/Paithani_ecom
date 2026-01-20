@@ -10,7 +10,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -27,13 +29,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Step 1: Register the user
+      // Step 1: Register the user with phone number
       const registerResponse = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, phoneNumber, password }),
       });
 
       if (!registerResponse.ok) {
@@ -43,23 +45,11 @@ export default function RegisterPage() {
         return;
       }
 
-      // Step 2: Automatically login after successful registration
-      const loginResponse = await fetch('/api/auth/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const registerData = await registerResponse.json();
 
-      if (loginResponse.ok) {
-        await refreshUser();
-        router.push('/');
-      } else {
-        // Registration succeeded but login failed - redirect to login page
-        router.push('/login?message=registered');
-      }
+      // Step 2: Redirect to OTP verification page
+      // User must verify email/OTP before accessing the app
+      router.push(`/verify-otp?userId=${registerData.userId}&email=${encodeURIComponent(email)}`);
     } catch (err) {
       console.error('Registration error:', err);
       setError('An error occurred. Please try again.');
@@ -88,7 +78,7 @@ export default function RegisterPage() {
       <form onSubmit={handleRegister}>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>
-            Name:
+            Name *
           </label>
           <input
             type="text"
@@ -99,7 +89,8 @@ export default function RegisterPage() {
               width: '100%', 
               padding: '8px', 
               border: '1px solid #ccc',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              boxSizing: 'border-box'
             }}
             placeholder="Your name"
           />
@@ -107,7 +98,7 @@ export default function RegisterPage() {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>
-            Email:
+            Email *
           </label>
           <input
             type="email"
@@ -118,7 +109,8 @@ export default function RegisterPage() {
               width: '100%', 
               padding: '8px', 
               border: '1px solid #ccc',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              boxSizing: 'border-box'
             }}
             placeholder="your@email.com"
           />
@@ -126,22 +118,66 @@ export default function RegisterPage() {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px' }}>
-            Password:
+            Mobile Number *
           </label>
           <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
             required
-            minLength={6}
+            pattern="[0-9]{10}"
             style={{ 
               width: '100%', 
               padding: '8px', 
               border: '1px solid #ccc',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              boxSizing: 'border-box'
             }}
-            placeholder="••••••••"
+            placeholder="10-digit mobile number"
           />
+          <small style={{ color: '#666' }}>10-digit number required</small>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>
+            Password *
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                paddingRight: '40px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                boxSizing: 'border-box'
+              }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '18px',
+                color: '#666',
+                padding: '5px',
+              }}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
           <small style={{ color: '#666' }}>Minimum 6 characters</small>
         </div>
 

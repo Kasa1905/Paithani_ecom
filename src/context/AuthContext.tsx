@@ -64,16 +64,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else if (response.status === 401) {
-        // User not authenticated
-        setUser(null);
-      } else {
-        // Unexpected error
-        console.error('Error fetching user:', response.statusText);
-        setUser(null);
+        // Happy path
+        const data = await response.json().catch(() => ({}));
+        setUser(data.user ?? null);
+        return;
       }
+
+      // Graceful handling of common error statuses
+      if (response.status === 401 || response.status === 404) {
+        // Treat both unauthorized and missing route as unauthenticated
+        setUser(null);
+        return;
+      }
+
+      // Unexpected server/client error
+      const statusText = response.statusText || `HTTP ${response.status}`;
+      console.error('Error fetching user:', statusText);
+      setUser(null);
     } catch (error) {
       console.error('Failed to refresh user:', error);
       setUser(null);

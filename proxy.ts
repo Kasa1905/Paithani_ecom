@@ -49,15 +49,17 @@ export async function proxy(request: NextRequest) {
 
   // 2. Determine route type
   const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminLogin = pathname === '/admin/login';
   const isProtectedRoute = ['/cart', '/checkout', '/orders'].some(route => pathname.startsWith(route));
 
   // 3. Check if user is authenticated
   if (!authToken) {
     // No token found
-    if (isAdminRoute || isProtectedRoute) {
+    if ((isAdminRoute && !isAdminLogin) || isProtectedRoute) {
       // Redirect to login if trying to access protected routes without token
-      console.log(`[Middleware] No token - redirecting ${pathname} to /login`);
-      return NextResponse.redirect(new URL('/login', request.url));
+      const dest = isAdminRoute ? '/admin/login' : '/login';
+      console.log(`[Middleware] No token - redirecting ${pathname} to ${dest}`);
+      return NextResponse.redirect(new URL(dest, request.url));
     }
     // Public route or API route - allow access
     return NextResponse.next();
@@ -68,17 +70,18 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     // Token is invalid or expired
-    if (isAdminRoute || isProtectedRoute) {
+    if ((isAdminRoute && !isAdminLogin) || isProtectedRoute) {
       // Redirect to login if token is invalid
-      console.log(`[Middleware] Invalid token - redirecting ${pathname} to /login`);
-      return NextResponse.redirect(new URL('/login', request.url));
+      const dest = isAdminRoute ? '/admin/login' : '/login';
+      console.log(`[Middleware] Invalid token - redirecting ${pathname} to ${dest}`);
+      return NextResponse.redirect(new URL(dest, request.url));
     }
     // For public routes, allow access even with invalid token
     return NextResponse.next();
   }
 
   // 5. Check admin access for /admin routes
-  if (isAdminRoute) {
+  if (isAdminRoute && !isAdminLogin) {
     if (user.role !== 'admin') {
       // User is logged in but not admin - redirect to home
       console.log(`[Middleware] User not admin - redirecting ${pathname} to /`);
