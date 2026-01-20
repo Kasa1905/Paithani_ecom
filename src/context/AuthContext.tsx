@@ -18,7 +18,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -51,8 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * refreshUser: Fetch current user from server
    * Called on mount and can be manually invoked after login/logout
+   * Returns the user object or null if not authenticated
    */
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<User | null> => {
     try {
       setLoading(true);
       const response = await fetch('/api/auth/me', {
@@ -66,24 +67,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         // Happy path
         const data = await response.json().catch(() => ({}));
-        setUser(data.user ?? null);
-        return;
+        const userData = data.user ?? null;
+        setUser(userData);
+        return userData;
       }
 
       // Graceful handling of common error statuses
       if (response.status === 401 || response.status === 404) {
         // Treat both unauthorized and missing route as unauthenticated
         setUser(null);
-        return;
+        return null;
       }
 
       // Unexpected server/client error
       const statusText = response.statusText || `HTTP ${response.status}`;
       console.error('Error fetching user:', statusText);
       setUser(null);
+      return null;
     } catch (error) {
       console.error('Failed to refresh user:', error);
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }

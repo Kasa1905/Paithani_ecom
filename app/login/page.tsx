@@ -122,6 +122,12 @@ export default function LoginPage() {
       <p className={styles.registerText}>
         Don't have an account? <Link href="/register" className={styles.link}>Register</Link>
       </p>
+
+      <div className={styles.divider}></div>
+
+      <p className={styles.adminText}>
+        🔐 <Link href="/admin/login" className={styles.adminLink}>Login as Admin</Link>
+      </p>
     </div>
   );
 }

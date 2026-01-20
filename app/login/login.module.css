@@ -68,6 +68,32 @@
   text-align: center;
 }
 
+.divider {
+  margin: 20px 0;
+  border-top: 1px solid #ddd;
+}
+
+.adminText {
+  text-align: center;
+  font-size: 14px;
+  margin: 0;
+}
+
 .link {
   color: #007bff;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.adminLink {
+  color: #dc3545;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.adminLink:hover {
+  text-decoration: underline;
 }
