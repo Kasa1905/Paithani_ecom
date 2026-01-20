@@ -27,7 +27,7 @@ const OrderSchema = new Schema(
     user: { type: Types.ObjectId, ref: 'User', required: true },
     items: { type: [OrderItemSchema], required: true },
     totalAmount: { type: Number, required: true, min: 0 },
-    shippingAddress: { type: AddressSchema, required: true },
+    shippingAddress: { type: AddressSchema, required: false }, // Optional for backward compatibility with existing orders
     status: {
       type: String,
       enum: ['received', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],

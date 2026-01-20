@@ -189,7 +189,7 @@ export default function AdminOrdersPage() {
               <div style={{ marginBottom: '8px' }}>
                 <strong>Customer:</strong> {order.user?.name || order.user?.email || 'N/A'}
               </div>
-              {order.shippingAddress && (
+              {order.shippingAddress ? (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Delivery Address:</strong>
                   <div style={{ paddingLeft: '12px', marginTop: '4px', fontSize: '14px', color: '#555' }}>
@@ -201,6 +201,10 @@ export default function AdminOrdersPage() {
                     </div>
                     <div>{order.shippingAddress.country}</div>
                   </div>
+                </div>
+              ) : (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Delivery Address:</strong> <span style={{ color: '#999', fontStyle: 'italic' }}>No address provided (test user)</span>
                 </div>
               )}
               <div style={{ marginBottom: '8px' }}>
