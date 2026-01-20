@@ -1,5 +1,20 @@
 import mongoose, { Schema, models } from "mongoose";
 
+const AddressSchema = new Schema(
+  {
+    fullName: { type: String, required: true },
+    phone: { type: String, required: true },
+    addressLine1: { type: String, required: true },
+    addressLine2: { type: String },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+    country: { type: String, default: 'India' },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: true }
+);
+
 const UserSchema = new Schema(
   {
     name: {
@@ -47,6 +62,11 @@ const UserSchema = new Schema(
       enum: ['email', 'phone'],
       default: 'email',
       select: false,
+    },
+    // Saved addresses (optional, future-safe)
+    addresses: {
+      type: [AddressSchema],
+      default: [],
     },
     role: {
       type: String,

@@ -4,10 +4,20 @@ import { useEffect, useState } from 'react';
 
 type Order = {
   _id: string;
-  user: { email?: string } | null;
+  user: { email?: string; name?: string } | null;
   items?: Array<{ product: { title: string; price: number } | string; quantity: number }>;
   totalAmount: number;
   status: string;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
   createdAt?: string;
   deliveredAt?: string;
   archivedAt?: string;
@@ -177,8 +187,22 @@ export default function AdminOrdersPage() {
                 <strong>Order ID:</strong> {order._id}
               </div>
               <div style={{ marginBottom: '8px' }}>
-                <strong>User:</strong> {order.user?.email || 'N/A'}
+                <strong>Customer:</strong> {order.user?.name || order.user?.email || 'N/A'}
               </div>
+              {order.shippingAddress && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Delivery Address:</strong>
+                  <div style={{ paddingLeft: '12px', marginTop: '4px', fontSize: '14px', color: '#555' }}>
+                    <div>{order.shippingAddress.fullName} | {order.shippingAddress.phone}</div>
+                    <div>{order.shippingAddress.addressLine1}</div>
+                    {order.shippingAddress.addressLine2 && <div>{order.shippingAddress.addressLine2}</div>}
+                    <div>
+                      {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
+                    </div>
+                    <div>{order.shippingAddress.country}</div>
+                  </div>
+                </div>
+              )}
               <div style={{ marginBottom: '8px' }}>
                 <strong>Items:</strong>
                 <ul style={{ listStyle: 'none', padding: '0 0 0 12px', margin: '4px 0' }}>

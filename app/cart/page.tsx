@@ -36,7 +36,6 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
-  const [placingOrder, setPlacingOrder] = useState(false);
 
   const fetchCart = async () => {
     try {
@@ -145,44 +144,10 @@ export default function CartPage() {
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
-      alert('Your cart is empty');
+      setError('Your cart is empty');
       return;
     }
-    // For now, proceed directly to place order
-    // In future, this would go to a checkout page with address/payment forms
-    handlePlaceOrder();
-  };
-
-  const handlePlaceOrder = async () => {
-    setPlacingOrder(true);
-    try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          items: cartItems.map(item => ({
-            product: item.product._id,
-            quantity: item.quantity,
-            price: item.product.price,
-          })),
-          totalAmount: calculateTotal(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await parseJsonSafe(response);
-        throw new Error(errorData?.error || 'Failed to place order');
-      }
-
-      await refreshCartCount();
-      alert('Order placed successfully!');
-      router.push('/orders');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to place order');
-    } finally {
-      setPlacingOrder(false);
-    }
+    router.push('/checkout-address');
   };
 
   if (loading) {
@@ -382,7 +347,6 @@ export default function CartPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
                   onClick={handleProceedToCheckout}
-                  disabled={placingOrder}
                   style={{
                     width: '100%',
                     padding: '16px 24px',
@@ -390,15 +354,15 @@ export default function CartPage() {
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
-                    cursor: placingOrder ? 'wait' : 'pointer',
+                    cursor: 'pointer',
                     fontSize: '18px',
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s',
                   }}
-                  onMouseOver={(e) => !placingOrder && (e.currentTarget.style.backgroundColor = '#218838')}
-                  onMouseOut={(e) => !placingOrder && (e.currentTarget.style.backgroundColor = '#28a745')}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
                 >
-                  {placingOrder ? 'Processing...' : 'Proceed to Checkout'}
+                  Proceed to Checkout
                 </button>
                 <Link 
                   href="/products"

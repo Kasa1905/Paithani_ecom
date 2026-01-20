@@ -53,6 +53,7 @@ export async function GET() {
 // POST /api/orders - Create order from cart or single product
 // IMPORTANT: Stock is NOT deducted here - only validated
 // Stock is deducted ONLY when admin confirms order (received → confirmed)
+// Address is REQUIRED to place an order
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -71,6 +72,17 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // Validate address is provided
+    if (!body.address || !body.address.fullName || !body.address.phone || 
+        !body.address.addressLine1 || !body.address.city || 
+        !body.address.state || !body.address.pincode) {
+      return NextResponse.json(
+        { error: "Shipping address is required to place an order" },
+        { status: 400 }
+      );
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -175,6 +187,16 @@ export async function POST(req: Request) {
             user: userId,
             items: orderItems,
             totalAmount,
+            shippingAddress: {
+              fullName: body.address.fullName,
+              phone: body.address.phone,
+              addressLine1: body.address.addressLine1,
+              addressLine2: body.address.addressLine2 || '',
+              city: body.address.city,
+              state: body.address.state,
+              pincode: body.address.pincode,
+              country: body.address.country || 'India',
+            },
             status: "received",
             payment: {
               status: "pending",
