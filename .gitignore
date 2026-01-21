@@ -41,3 +41,6 @@ yarn-error.log*
 # local files
 .vscode/
 .idea/
+
+# admin scripts (contains default credentials - security risk)
+scripts/create-admin.ts

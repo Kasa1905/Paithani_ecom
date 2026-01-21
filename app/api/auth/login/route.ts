@@ -20,8 +20,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
-    // Check if user has verified email
-    if (!user.isEmailVerified) {
+    // Check if user has verified email (skip for admin users)
+    if (!user.isEmailVerified && user.role !== 'admin') {
       return NextResponse.json(
         { 
           message: "Please verify your email first",

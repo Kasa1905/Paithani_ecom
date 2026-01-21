@@ -15,7 +15,7 @@ const parseJsonSafe = async (response: Response) => {
 };
 
 export default function AdminLoginPage() {
-  const { refreshUser, isAuthenticated, user } = useAuth();
+  const { refreshUser, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,12 +23,12 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in as admin
+  // Redirect if already logged in as admin (only after auth loads)
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
+    if (!authLoading && isAuthenticated && user?.role === 'admin') {
       router.push('/admin/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
