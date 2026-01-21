@@ -15,7 +15,7 @@ const parseJsonSafe = async (response: Response) => {
 };
 
 export default function LoginPage() {
-  const { refreshUser, isAuthenticated } = useAuth();
+  const { refreshUser, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,12 +23,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (only after auth loads)
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
+    if (!authLoading && isAuthenticated) {
+      if (user?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +50,14 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        await refreshUser();
-        router.push('/');
+        const updatedUser = await refreshUser();
+        
+        // Redirect based on role
+        if (updatedUser?.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
       } else {
         const data = await parseJsonSafe(response);
         setError(data?.message || 'Login failed');
@@ -121,12 +131,6 @@ export default function LoginPage() {
 
       <p className={styles.registerText}>
         Don't have an account? <Link href="/register" className={styles.link}>Register</Link>
-      </p>
-
-      <div className={styles.divider}></div>
-
-      <p className={styles.adminText}>
-        🔐 <Link href="/admin/login" className={styles.adminLink}>Login as Admin</Link>
       </p>
     </div>
   );

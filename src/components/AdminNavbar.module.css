@@ -1,0 +1,186 @@
+.adminHeader {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.adminNav {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  gap: 2rem;
+}
+
+.brand {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: fit-content;
+  flex-shrink: 0;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.navList {
+  display: flex;
+  list-style: none;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  align-items: center;
+}
+
+.navItem {
+  position: relative;
+  margin: 0;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  padding: 1rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: #4CAF50;
+}
+
+.subMenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #0f3460;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  min-width: 180px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.navItem:hover .subMenu {
+  display: block;
+}
+
+.subMenu li {
+  margin: 0;
+}
+
+.subMenu li a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.subMenu li a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left-color: #4CAF50;
+  padding-left: 1.75rem;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  color: white;
+  padding: 1rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.logoutBtn:hover {
+  background-color: rgba(255, 68, 68, 0.2);
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .adminNav {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+
+  .brand {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navList {
+    width: 100%;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .navItem {
+    width: 100%;
+  }
+
+  .navLink,
+  .logoutBtn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+  }
+
+  .subMenu {
+    position: static;
+    display: none;
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .navItem:hover .subMenu {
+    display: none;
+  }
+
+  .navItem.expanded .subMenu {
+    display: block;
+  }
+
+  .subMenu li a {
+    padding: 0.5rem 2rem;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .subMenu li a:hover {
+    padding-left: 2rem;
+  }
+}

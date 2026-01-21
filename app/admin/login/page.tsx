@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
   // Redirect if already logged in as admin (only after auth loads)
   useEffect(() => {
     if (!authLoading && isAuthenticated && user?.role === 'admin') {
-      router.push('/admin/dashboard');
+      router.push('/admin');
     }
   }, [authLoading, isAuthenticated, user, router]);
 
@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
         // Check if user is admin
         if (updatedUser?.role === 'admin') {
           // Admin login successful
-          router.push('/admin/dashboard');
+          router.push('/admin');
         } else {
           // User logged in but is NOT an admin
           setError('❌ Not authorized as admin. Please log in with an admin account.');

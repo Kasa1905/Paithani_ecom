@@ -1,7 +1,6 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import Header from '@/components/Header';
 
 interface UserLayoutProps {
   children: ReactNode;
@@ -9,9 +8,6 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   return (
-    <div>
-      <Header />
-      <main>{children}</main>
-    </div>
+    <main>{children}</main>
   );
 }
