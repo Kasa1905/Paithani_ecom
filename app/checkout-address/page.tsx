@@ -204,7 +204,7 @@ export default function CheckoutAddressPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handleProceedToPayment = async () => {
     if (!selectedAddressId) {
       setError('Please select an address to continue');
       return;
@@ -227,7 +227,39 @@ export default function CheckoutAddressPage() {
       }
 
       const data = await parseJsonSafe(response);
-      router.push(`/orders?success=true&orderId=${data.order._id}`);
+      const orderId = data?.order?._id;
+
+      if (!orderId) {
+        throw new Error('Order created but missing order id');
+      }
+
+      // Mock payment initiation
+      const initiate = await fetch('/api/payments/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (!initiate.ok) {
+        const errBody = await parseJsonSafe(initiate);
+        throw new Error(errBody?.error || 'Failed to initiate payment');
+      }
+
+      // Mock payment verification (success)
+      const verify = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (!verify.ok) {
+        const errBody = await parseJsonSafe(verify);
+        throw new Error(errBody?.error || 'Payment verification failed');
+      }
+
+      router.push(`/orders?success=true&orderId=${orderId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to place order');
     } finally {
@@ -524,7 +556,7 @@ export default function CheckoutAddressPage() {
 
             <button
               type="button"
-              onClick={handlePlaceOrder}
+              onClick={handleProceedToPayment}
               disabled={submitting || addresses.length === 0}
               style={{
                 marginTop: '20px',
@@ -538,7 +570,7 @@ export default function CheckoutAddressPage() {
                 fontWeight: 700,
               }}
             >
-              {submitting ? 'Placing order...' : 'Place Order'}
+              {submitting ? 'Processing payment...' : 'Proceed to Payment'}
             </button>
           </div>
         </div>

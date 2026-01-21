@@ -190,7 +190,7 @@ export async function POST(req: Request) {
         );
       }
 
-      // Create order with "received" status and "pending" payment; address snapshot only
+      // Create order with payment_pending status and pending payment snapshot
       const order = await Order.create(
         [
           {
@@ -199,9 +199,11 @@ export async function POST(req: Request) {
             totalAmount,
             shippingAddress,
             stockDeducted: true,
-            status: "received",
+            status: "payment_pending",
             payment: {
               status: "pending",
+              amount: totalAmount,
+              currency: "INR",
             },
           },
         ],

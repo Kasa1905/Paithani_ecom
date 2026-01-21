@@ -4,9 +4,11 @@
  * Cancellation only allowed at received stage
  */
 
-export type OrderStatus = 'received' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'archived';
+export type OrderStatus = 'payment_pending' | 'paid' | 'received' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'archived';
 
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  'payment_pending': ['paid', 'cancelled'],
+  'paid': ['received', 'cancelled'],
   'received': ['confirmed', 'cancelled'],
   'confirmed': ['packed'],
   'packed': ['shipped'],
@@ -56,7 +58,7 @@ export function getAllowedNextStatuses(currentStatus: string): string[] {
  * @returns boolean
  */
 export function canCancel(status: string): boolean {
-  return status === 'received';
+  return status === 'payment_pending' || status === 'paid' || status === 'received';
 }
 
 /**

@@ -63,6 +63,20 @@ export async function PATCH(
       );
     }
 
+    // Payment guard: no forward movement without successful payment
+    const paidStatuses = ["success"];
+    const forwardStatuses = ["paid", "received", "confirmed", "packed", "shipped", "delivered"];
+    if (
+      forwardStatuses.includes(status) &&
+      !paidStatuses.includes(currentOrder.payment?.status || "") &&
+      status !== "cancelled"
+    ) {
+      return NextResponse.json(
+        { error: "Cannot progress unpaid orders. Payment is still pending." },
+        { status: 400 }
+      );
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 

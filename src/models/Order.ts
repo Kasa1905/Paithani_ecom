@@ -32,16 +32,17 @@ const OrderSchema = new Schema(
     stockDeducted: { type: Boolean, default: false },
     status: {
       type: String,
-      enum: ['received', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],
-      default: 'received',
+      enum: ['payment_pending', 'paid', 'received', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],
+      default: 'payment_pending',
     },
     payment: {
+      referenceId: { type: String },
       razorpayOrderId: { type: String },
       razorpayPaymentId: { type: String },
       razorpaySignature: { type: String },
       status: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
+        enum: ['pending', 'success', 'failed'],
         default: 'pending',
       },
       amount: { type: Number },
