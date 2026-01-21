@@ -57,12 +57,12 @@ export default function InventoryPage() {
   const handleUpdateStock = async (productId: string) => {
     try {
       const response = await fetch(`/api/admin/products/${productId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ stock: newStock }),
+        body: JSON.stringify({ productId, stock: newStock }),
       });
 
       if (!response.ok) {
