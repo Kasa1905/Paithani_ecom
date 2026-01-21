@@ -45,7 +45,8 @@ export default function InventoryPage() {
       }
 
       const data = await response.json();
-      setProducts(data || []);
+      // API returns { products: [...] }
+      setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
