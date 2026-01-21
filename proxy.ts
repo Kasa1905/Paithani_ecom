@@ -49,7 +49,8 @@ export async function proxy(request: NextRequest) {
 
   // 2. Determine route type
   const isAdminRoute = pathname.startsWith('/admin');
-  const isAdminLogin = pathname === '/admin/login';
+  // Treat both "/admin/login" and "/admin/login/" (and any query variations) as the admin login route
+  const isAdminLogin = pathname.startsWith('/admin/login');
   const isProtectedRoute = ['/cart', '/checkout', '/checkout-address', '/orders'].some(route => pathname.startsWith(route));
 
   // 3. Check if user is authenticated
