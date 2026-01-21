@@ -23,6 +23,16 @@ interface Order {
   status: string;
   createdAt?: string;
   deliveredAt?: string;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
 }
 
 export default function OrdersPage() {
@@ -32,8 +42,6 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [placing, setPlacing] = useState(false);
-  const [message, setMessage] = useState('');
 
   // Enforce auth
   useEffect(() => {
@@ -92,33 +100,6 @@ export default function OrdersPage() {
     }
   };
 
-  const placeOrder = async () => {
-    setPlacing(true);
-    setMessage('');
-    setError('');
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error('Please login to place an order');
-        }
-        const body = await res.json().catch(() => ({} as { error?: string }));
-        throw new Error(body.error || 'Failed to place order');
-      }
-
-      setMessage('Order placed successfully. Cart cleared.');
-      await fetchOrders();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to place order');
-    } finally {
-      setPlacing(false);
-    }
-  };
-
   if (authLoading) {
     return <UserLayout><div>Loading...</div></UserLayout>;
   }
@@ -127,12 +108,6 @@ export default function OrdersPage() {
     <UserLayout>
       <div>
         <h1>Your Orders</h1>
-
-        <button onClick={placeOrder} disabled={placing}>
-          {placing ? 'Placing...' : 'Place Order'}
-        </button>
-
-        {message && <p>{message}</p>}
         {error && <p>{error}</p>}
 
         {loading ? (
@@ -190,6 +165,20 @@ export default function OrdersPage() {
                     })}
                   </ul>
                 </div>
+                {order.shippingAddress && (
+                  <div style={{ marginBottom: '8px', color: '#555' }}>
+                    <strong>Delivery:</strong>
+                    <div style={{ paddingLeft: '12px', marginTop: '4px' }}>
+                      <div>{order.shippingAddress.fullName} | {order.shippingAddress.phone}</div>
+                      <div>{order.shippingAddress.addressLine1}</div>
+                      {order.shippingAddress.addressLine2 && <div>{order.shippingAddress.addressLine2}</div>}
+                      <div>
+                        {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
+                      </div>
+                      <div>{order.shippingAddress.country}</div>
+                    </div>
+                  </div>
+                )}
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Total:</strong> ₹{order.totalAmount?.toFixed(2)}
                 </div>

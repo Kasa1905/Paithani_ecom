@@ -28,6 +28,8 @@ const OrderSchema = new Schema(
     items: { type: [OrderItemSchema], required: true },
     totalAmount: { type: Number, required: true, min: 0 },
     shippingAddress: { type: AddressSchema, required: false }, // Optional for backward compatibility with existing orders
+    // Tracks whether stock was deducted at order creation. New orders set this to true.
+    stockDeducted: { type: Boolean, default: false },
     status: {
       type: String,
       enum: ['received', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],

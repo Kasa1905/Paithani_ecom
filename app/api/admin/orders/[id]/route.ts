@@ -7,12 +7,11 @@ import Order from "@/models/Order";
 import Product from "@/models/Product";
 import User from "@/models/User";
 import { validateTransition } from "@/lib/orderTransitions";
-import { deductStockAtomically, restoreStockAtomically } from "@/lib/stockOperations";
+import { restoreStockAtomically } from "@/lib/stockOperations";
 
 // PATCH /api/admin/orders/[id] - Update order status with strict stock control
 // Enforces strict lifecycle: RECEIVED → CONFIRMED → PACKED → SHIPPED → DELIVERED
-// Stock is deducted ONLY on confirmation (received → confirmed)
-// Stock is restored ONLY when cancelling confirmed orders
+// Stock is already deducted at order creation; cancellation restores it when needed
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -68,41 +67,9 @@ export async function PATCH(
     session.startTransaction();
 
     try {
-      // Handle CONFIRMATION: Deduct stock atomically
-      if (status === "confirmed" && currentOrder.status === "received") {
-        const stockDeduction = await deductStockAtomically(
-          currentOrder.items.map((item: { product: mongoose.Types.ObjectId; quantity: number }) => ({
-            product: item.product.toString(),
-            quantity: item.quantity
-          })),
-          session
-        );
-
-        if (!stockDeduction.success) {
-          await session.abortTransaction();
-          console.error("[ORDER CONFIRMATION ERROR]", {
-            orderId: id,
-            error: stockDeduction.error,
-            failedProduct: stockDeduction.failedProduct,
-            items: currentOrder.items
-          });
-          return NextResponse.json(
-            { 
-              error: stockDeduction.error || "Failed to deduct stock",
-              failedProduct: stockDeduction.failedProduct
-            },
-            { status: 400 }
-          );
-        }
-
-        currentOrder.status = "confirmed";
-        await currentOrder.save({ session });
-      }
-      // Handle CANCELLATION: Restore stock ONLY if order was confirmed
-      else if (status === "cancelled") {
-        // Only restore stock if order was already confirmed (stock was deducted)
-        if (currentOrder.status !== "received") {
-          // Order was confirmed, packed, shipped, etc. - need to restore stock
+      if (status === "cancelled") {
+        // Restore stock only if this order already deducted stock
+        if (currentOrder.stockDeducted) {
           const restored = await restoreStockAtomically(
             currentOrder.items.map((item: { product: mongoose.Types.ObjectId; quantity: number }) => ({
               product: item.product.toString(),
@@ -118,14 +85,14 @@ export async function PATCH(
               { status: 500 }
             );
           }
+
+          currentOrder.stockDeducted = false;
         }
-        // If order was still in "received" status, stock was never deducted, so nothing to restore
 
         currentOrder.status = "cancelled";
         await currentOrder.save({ session });
-      }
-      // Handle other normal transitions (packed, shipped, delivered)
-      else {
+      } else {
+        // Normal forward transitions; stock already deducted at order creation
         currentOrder.status = status;
         if (status === "delivered") {
           currentOrder.deliveredAt = new Date();

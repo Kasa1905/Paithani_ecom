@@ -6,8 +6,9 @@ import { verifyToken } from "@/lib/jwt";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
+import Address from "@/models/Address";
 import { archiveEligibleOrders, getActiveOrdersFilter } from "@/lib/archiveOrders";
-import { validateStockAvailability } from "@/lib/stockOperations";
+import { deductStockAtomically } from "@/lib/stockOperations";
 
 // GET /api/orders - Returns user's ACTIVE orders (non-archived) sorted newest first
 // Automatically archives eligible orders (15+ days after delivery) before fetching
@@ -51,9 +52,8 @@ export async function GET() {
 }
 
 // POST /api/orders - Create order from cart or single product
-// IMPORTANT: Stock is NOT deducted here - only validated
-// Stock is deducted ONLY when admin confirms order (received → confirmed)
-// Address is REQUIRED to place an order
+// Stock is deducted atomically during order creation (fails fast if insufficient)
+// Address selection is REQUIRED; snapshot is stored on the order (no reference kept)
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -73,10 +73,40 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    // Validate address is provided
-    if (!body.address || !body.address.fullName || !body.address.phone || 
-        !body.address.addressLine1 || !body.address.city || 
-        !body.address.state || !body.address.pincode) {
+    const { addressId } = body;
+
+    // Resolve address (must belong to current user). Fallback to raw payload only for backward compatibility.
+    let shippingAddress: any = null;
+    if (addressId) {
+      const addressDoc = await Address.findOne({ _id: addressId, user: userId });
+      if (!addressDoc) {
+        return NextResponse.json(
+          { error: "Address not found for user" },
+          { status: 404 }
+        );
+      }
+      shippingAddress = {
+        fullName: addressDoc.fullName,
+        phone: addressDoc.phone,
+        addressLine1: addressDoc.addressLine1,
+        addressLine2: addressDoc.addressLine2 || "",
+        city: addressDoc.city,
+        state: addressDoc.state,
+        pincode: addressDoc.pincode,
+        country: addressDoc.country || "India",
+      };
+    } else if (body.address && body.address.fullName && body.address.phone && body.address.addressLine1 && body.address.city && body.address.state && body.address.pincode) {
+      shippingAddress = {
+        fullName: body.address.fullName,
+        phone: body.address.phone,
+        addressLine1: body.address.addressLine1,
+        addressLine2: body.address.addressLine2 || "",
+        city: body.address.city,
+        state: body.address.state,
+        pincode: body.address.pincode,
+        country: body.address.country || "India",
+      };
+    } else {
       return NextResponse.json(
         { error: "Shipping address is required to place an order" },
         { status: 400 }
@@ -103,22 +133,6 @@ export async function POST(req: Request) {
           );
         }
 
-        // Validate stock availability (does NOT deduct stock)
-        const stockCheck = await validateStockAvailability([
-          { product: body.productId, quantity }
-        ]);
-
-        if (!stockCheck.available) {
-          await session.abortTransaction();
-          return NextResponse.json(
-            { 
-              error: stockCheck.error || "Insufficient stock",
-              failedProduct: stockCheck.failedProduct
-            },
-            { status: 400 }
-          );
-        }
-
         orderItems = [
           {
             product: product._id,
@@ -140,9 +154,7 @@ export async function POST(req: Request) {
           );
         }
 
-        // Build order items and validate stock
-        const itemsToValidate: Array<{ product: string; quantity: number }> = [];
-        
+        // Build order items and tally total
         for (const item of cart.items) {
           const quantity = Math.max(1, Number(item.quantity) || 1);
           const productId = item.product?._id || item.product;
@@ -156,47 +168,37 @@ export async function POST(req: Request) {
             );
           }
 
-          itemsToValidate.push({ product: String(productId), quantity });
           totalAmount += (product.price || 0) * quantity;
           orderItems.push({ product: product._id, quantity });
         }
 
-        // Validate stock availability (does NOT deduct stock)
-        const stockCheck = await validateStockAvailability(itemsToValidate);
-
-        if (!stockCheck.available) {
-          await session.abortTransaction();
-          return NextResponse.json(
-            { 
-              error: stockCheck.error || "Insufficient stock for one or more items",
-              failedProduct: stockCheck.failedProduct
-            },
-            { status: 400 }
-          );
-        }
-
-        // Clear cart after validation
+        // Clear cart early so it is part of the transaction
         await Cart.deleteOne({ user: userId }).session(session);
       }
 
-      // Create order with "received" status and "pending" payment
-      // Stock is NOT deducted yet - will be deducted when admin confirms
+      // Deduct stock atomically (fails fast on insufficient stock)
+      const stockDeduction = await deductStockAtomically(
+        orderItems.map((item) => ({ product: item.product.toString(), quantity: item.quantity })),
+        session
+      );
+
+      if (!stockDeduction.success) {
+        await session.abortTransaction();
+        return NextResponse.json(
+          { error: stockDeduction.error || "Insufficient stock", failedProduct: stockDeduction.failedProduct },
+          { status: 400 }
+        );
+      }
+
+      // Create order with "received" status and "pending" payment; address snapshot only
       const order = await Order.create(
         [
           {
             user: userId,
             items: orderItems,
             totalAmount,
-            shippingAddress: {
-              fullName: body.address.fullName,
-              phone: body.address.phone,
-              addressLine1: body.address.addressLine1,
-              addressLine2: body.address.addressLine2 || '',
-              city: body.address.city,
-              state: body.address.state,
-              pincode: body.address.pincode,
-              country: body.address.country || 'India',
-            },
+            shippingAddress,
+            stockDeducted: true,
             status: "received",
             payment: {
               status: "pending",

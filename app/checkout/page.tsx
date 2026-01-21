@@ -23,6 +23,16 @@ type Order = {
   totalAmount: number;
   status: string;
   createdAt: string;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
 };
 
 // Safely parse JSON without throwing when server returns HTML/error pages
@@ -269,6 +279,17 @@ function CheckoutClient() {
               </div>
             ))}
           </div>
+
+            {order.shippingAddress && (
+              <div style={{ marginTop: '15px', fontSize: '14px', color: '#444' }}>
+                <h3 style={{ fontSize: '16px', marginBottom: '6px' }}>Delivery Address</h3>
+                <div>{order.shippingAddress.fullName} | {order.shippingAddress.phone}</div>
+                <div>{order.shippingAddress.addressLine1}</div>
+                {order.shippingAddress.addressLine2 && <div>{order.shippingAddress.addressLine2}</div>}
+                <div>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</div>
+                <div>{order.shippingAddress.country}</div>
+              </div>
+            )}
 
           <div
             style={{

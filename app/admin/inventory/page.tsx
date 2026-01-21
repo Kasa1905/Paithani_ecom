@@ -12,6 +12,7 @@ interface Product {
   stock: number;
   price: number;
   image?: string;
+  description?: string;
 }
 
 export default function InventoryPage() {
@@ -22,6 +23,7 @@ export default function InventoryPage() {
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newStock, setNewStock] = useState<number>(0);
+  const [newDescription, setNewDescription] = useState<string>('');
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -54,7 +56,7 @@ export default function InventoryPage() {
     }
   };
 
-  const handleUpdateStock = async (productId: string) => {
+  const handleUpdateProduct = async (productId: string) => {
     try {
       const response = await fetch(`/api/admin/products/${productId}`, {
         method: 'PUT',
@@ -62,18 +64,23 @@ export default function InventoryPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ productId, stock: newStock }),
+        body: JSON.stringify({ 
+          productId, 
+          stock: newStock,
+          description: newDescription 
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update stock');
+        throw new Error('Failed to update product');
       }
 
       setEditingId(null);
       setNewStock(0);
+      setNewDescription('');
       await fetchProducts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update stock');
+      setError(err instanceof Error ? err.message : 'Failed to update product');
     }
   };
 
@@ -97,6 +104,7 @@ export default function InventoryPage() {
             <tr>
               <th>Product Name</th>
               <th>SKU</th>
+              <th>Description</th>
               <th>Current Stock</th>
               <th>Price</th>
               <th>Actions</th>
@@ -105,7 +113,7 @@ export default function InventoryPage() {
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={5} className={styles.noData}>
+                <td colSpan={6} className={styles.noData}>
                   No products found
                 </td>
               </tr>
@@ -123,12 +131,29 @@ export default function InventoryPage() {
                   <td>{product.sku || 'N/A'}</td>
                   <td>
                     {editingId === product._id ? (
+                      <textarea
+                        value={newDescription}
+                        onChange={(e) => setNewDescription(e.target.value)}
+                        className={styles.input}
+                        rows={2}
+                        placeholder="Product description"
+                      />
+                    ) : (
+                      <span>{product.description || 'No description'}</span>
+                    )}
+                  </td>
+                  <td>
+                    {editingId === product._id ? (
                       <input
                         type="number"
-                        value={newStock}
-                        onChange={(e) => setNewStock(parseInt(e.target.value))}
+                        value={newStock || ''}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                          setNewStock(isNaN(val) ? 0 : val);
+                        }}
                         className={styles.input}
                         min="0"
+                        placeholder="Stock quantity"
                       />
                     ) : (
                       <span
@@ -145,7 +170,7 @@ export default function InventoryPage() {
                     {editingId === product._id ? (
                       <>
                         <button
-                          onClick={() => handleUpdateStock(product._id)}
+                          onClick={() => handleUpdateProduct(product._id)}
                           className={styles.saveBtn}
                         >
                           ✓ Save
@@ -154,6 +179,7 @@ export default function InventoryPage() {
                           onClick={() => {
                             setEditingId(null);
                             setNewStock(0);
+                            setNewDescription('');
                           }}
                           className={styles.cancelBtn}
                         >
@@ -165,6 +191,7 @@ export default function InventoryPage() {
                         onClick={() => {
                           setEditingId(product._id);
                           setNewStock(product.stock);
+                          setNewDescription(product.description || '');
                         }}
                         className={styles.editBtn}
                       >
