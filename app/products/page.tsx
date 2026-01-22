@@ -11,8 +11,7 @@ interface Product {
   description: string;
   price: number;
   category: string;
-  imageUrl: string;
-  images?: string[];
+  images: string[];
   stock: number;
   isOutOfStock: boolean;
 }
@@ -83,20 +82,28 @@ export default function ProductsPage() {
       {products.length === 0 ? (
         <p>No products available</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul style={{ 
+          listStyle: 'none', 
+          padding: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '20px'
+        }}>
           {products.map((product) => {
             const outOfStock = product.isOutOfStock || product.stock <= 0;
+            const primaryImage = product.images && product.images.length > 0 ? product.images[0] : null;
+            
             return (
               <li 
                 key={product._id} 
                 style={{ 
-                  marginBottom: '15px', 
-                  padding: '15px', 
                   border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  opacity: outOfStock ? 0.5 : 1,
-                  pointerEvents: outOfStock ? 'none' : 'auto',
-                  backgroundColor: outOfStock ? '#f5f5f5' : 'transparent',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  opacity: outOfStock ? 0.6 : 1,
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  backgroundColor: outOfStock ? '#f5f5f5' : 'white',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
               >
                 <Link 
@@ -107,20 +114,40 @@ export default function ProductsPage() {
                     display: 'block'
                   }}
                 >
-                  <h3 style={{ margin: '0 0 10px 0' }}>{product.title}</h3>
-                  <p style={{ margin: '0 0 10px 0', color: '#666' }}>
-                    {product.description.substring(0, 100)}
-                    {product.description.length > 100 ? '...' : ''}
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: '#28a745' }}>
-                    ₹{product.price.toFixed(2)}
-                  </p>
+                  {primaryImage && (
+                    <div style={{
+                      width: '100%',
+                      height: '250px',
+                      overflow: 'hidden',
+                      backgroundColor: '#f8f8f8'
+                    }}>
+                      <img 
+                        src={primaryImage} 
+                        alt={product.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ padding: '15px' }}>
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>{product.title}</h3>
+                    <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '14px' }}>
+                      {product.description.substring(0, 80)}
+                      {product.description.length > 80 ? '...' : ''}
+                    </p>
+                    <p style={{ margin: '8px 0 0 0', fontWeight: 'bold', fontSize: '20px', color: '#28a745' }}>
+                      ₹{product.price.toFixed(2)}
+                    </p>
+                    {outOfStock && (
+                      <p style={{ margin: '8px 0 0 0', color: '#dc3545', fontWeight: 600 }}>
+                        Out of Stock
+                      </p>
+                    )}
+                  </div>
                 </Link>
-                {outOfStock && (
-                  <p style={{ margin: '10px 0 0 0', color: '#dc3545', fontWeight: 600 }}>
-                    Out of Stock
-                  </p>
-                )}
               </li>
             );
           })}

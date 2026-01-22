@@ -5,8 +5,8 @@ import Product from "@/models/Product";
 export async function GET() {
   try {
     await connectDB();
-    // Show products regardless of stock; isActive still respected for manual disables
-    const products = await Product.find({}).lean();
+    // Show active products only; stock check removed to show all stock levels
+    const products = await Product.find({ isActive: true }).lean();
     return NextResponse.json({ products }, { status: 200 });
   } catch (error) {
     console.error("GET /api/products error:", error);
@@ -31,6 +31,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return NextResponse.json(
+        { error: "At least one image is required" },
+        { status: 400 }
+      );
+    }
+
     const parsedStock = stock !== undefined ? Number(stock) : 0;
     if (!Number.isInteger(parsedStock) || parsedStock < 0) {
       return NextResponse.json(
@@ -43,7 +50,7 @@ export async function POST(req: Request) {
       title,
       description,
       price,
-      images: images || [],
+      images,
       category,
       stock: parsedStock,
       isOutOfStock: parsedStock === 0,

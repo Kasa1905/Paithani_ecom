@@ -1,21 +1,69 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function NewProductPage() {
+type Product = {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  images: string[];
+  isActive: boolean;
+  isFeatured: boolean;
+};
+
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const productId = params.id as string;
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [stock, setStock] = useState('0');
   const [isFeatured, setIsFeatured] = useState(false);
+  const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchProduct();
+  }, [productId]);
+
+  const fetchProduct = async () => {
+    try {
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch product');
+      }
+      const data = await res.json();
+      const p = data.product;
+      setProduct(p);
+      setTitle(p.title);
+      setDescription(p.description);
+      setPrice(p.price.toString());
+      setCategory(p.category);
+      setStock(p.stock.toString());
+      setImages(p.images || []);
+      setIsFeatured(p.isFeatured || false);
+      setIsActive(p.isActive);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load product');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -82,11 +130,11 @@ export default function NewProductPage() {
       return;
     }
 
-    setCreating(true);
+    setSaving(true);
 
     try {
-      const res = await fetch('/api/admin/products', {
-        method: 'POST',
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
@@ -96,7 +144,7 @@ export default function NewProductPage() {
           category,
           stock: stockNum,
           images,
-          isActive: true,
+          isActive,
           isFeatured,
         }),
       });
@@ -104,23 +152,31 @@ export default function NewProductPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create product');
+        throw new Error(data.error || 'Failed to update product');
       }
 
-      setMessage('Product created successfully! Redirecting...');
+      setMessage('Product updated successfully! Redirecting...');
       setTimeout(() => {
         router.push('/admin/products');
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create product');
+      setError(err instanceof Error ? err.message : 'Failed to update product');
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   };
 
+  if (loading) {
+    return <div style={{ padding: '20px' }}>Loading product...</div>;
+  }
+
+  if (!product) {
+    return <div style={{ padding: '20px', color: 'red' }}>Product not found</div>;
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Add New Product</h1>
+      <h1>Edit Product</h1>
 
       {error && <div style={{ padding: '12px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '16px' }}>{error}</div>}
       {message && <div style={{ padding: '12px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '16px' }}>{message}</div>}
@@ -206,6 +262,18 @@ export default function NewProductPage() {
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
             <input
               type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <span style={{ fontWeight: 600 }}>Product Active</span>
+          </label>
+        </div>
+
+        <div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
               checked={isFeatured}
               onChange={(e) => setIsFeatured(e.target.checked)}
               style={{ width: '18px', height: '18px', cursor: 'pointer' }}
@@ -234,7 +302,7 @@ export default function NewProductPage() {
 
           {images.length > 0 && (
             <div style={{ marginTop: '16px' }}>
-              <h3 style={{ marginBottom: '12px' }}>Uploaded Images ({images.length})</h3>
+              <h3 style={{ marginBottom: '12px' }}>Current Images ({images.length})</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
                 {images.map((url, index) => (
                   <div key={index} style={{ position: 'relative', border: '2px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
@@ -284,25 +352,25 @@ export default function NewProductPage() {
         <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
           <button
             type="submit"
-            disabled={creating || uploading}
+            disabled={saving || uploading}
             style={{
               padding: '12px 24px',
-              backgroundColor: creating || uploading ? '#6c757d' : '#28a745',
+              backgroundColor: saving || uploading ? '#6c757d' : '#007bff',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               fontSize: '16px',
               fontWeight: 600,
-              cursor: creating || uploading ? 'not-allowed' : 'pointer',
+              cursor: saving || uploading ? 'not-allowed' : 'pointer',
             }}
           >
-            {creating ? 'Creating...' : 'Create Product'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
 
           <button
             type="button"
             onClick={() => router.push('/admin/products')}
-            disabled={creating}
+            disabled={saving}
             style={{
               padding: '12px 24px',
               backgroundColor: '#6c757d',
@@ -310,7 +378,7 @@ export default function NewProductPage() {
               border: 'none',
               borderRadius: '4px',
               fontSize: '16px',
-              cursor: creating ? 'not-allowed' : 'pointer',
+              cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
             Cancel

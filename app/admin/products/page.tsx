@@ -11,6 +11,8 @@ type Product = {
   isActive: boolean;
   stock: number;
   isOutOfStock: boolean;
+  images: string[];
+  isFeatured: boolean;
 };
 
 export default function ProductsPage() {
@@ -167,9 +169,19 @@ export default function ProductsPage() {
                     <strong>{product.title}</strong> — ${product.price}
                     <div>Category: {product.category}</div>
                     <div>Status: {product.isActive ? 'Active' : 'Inactive'}</div>
+                    <div>Featured: {product.isFeatured ? '⭐ Yes' : 'No'}</div>
                     <div>
                       Availability: {product.isOutOfStock ? 'Out of stock' : 'In stock'} (Stock: {product.stock})
                     </div>
+                    {product.images && product.images.length > 0 && (
+                      <div style={{ marginTop: '8px' }}>
+                        <img 
+                          src={product.images[0]} 
+                          alt={product.title}
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
@@ -185,6 +197,19 @@ export default function ProductsPage() {
                       style={{ padding: '8px 12px' }}
                     >
                       {saving === product._id ? 'Saving...' : 'Save Stock'}
+                    </button>
+                    <button
+                      onClick={() => router.push(`/admin/products/${product._id}`)}
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Edit
                     </button>
                      <button
                        onClick={() => openDeleteConfirm(product._id)}

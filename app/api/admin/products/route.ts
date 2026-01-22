@@ -37,7 +37,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/products - create product with imageUrl from Cloudinary
+// POST /api/admin/products - create product with multiple images from Cloudinary
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
     const body = await req.json();
-    const { title, description, price, imageUrl, category, isActive, stock } = body;
+    const { title, description, price, images, category, isActive, stock, isFeatured } = body;
 
     if (!title || !description || typeof price !== "number" || !category) {
       return NextResponse.json(
@@ -54,10 +54,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate imageUrl is provided (must be from Cloudinary upload)
-    if (!imageUrl || typeof imageUrl !== "string") {
+    if (price <= 0) {
       return NextResponse.json(
-        { error: "imageUrl (from /api/upload) is required" },
+        { error: "price must be greater than 0" },
+        { status: 400 }
+      );
+    }
+
+    // Validate images array (must be from Cloudinary upload)
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return NextResponse.json(
+        { error: "At least one image is required (from /api/upload)" },
         { status: 400 }
       );
     }
@@ -73,11 +80,12 @@ export async function POST(req: Request) {
       title,
       description,
       price,
-      imageUrl,
+      images,
       category,
       stock: parsedStock,
       isOutOfStock: parsedStock === 0,
       isActive: isActive !== undefined ? isActive : true,
+      isFeatured: isFeatured || false,
     });
 
     return NextResponse.json({ product }, { status: 201 });
@@ -87,7 +95,7 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT /api/admin/products - update stock (and optional fields)
+// PUT /api/admin/products - update stock and other fields
 export async function PUT(req: Request) {
   try {
     await connectDB();
@@ -95,7 +103,7 @@ export async function PUT(req: Request) {
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
     const body = await req.json();
-    const { productId, stock, title, description, price, category, isActive } = body;
+    const { productId, stock, title, description, price, category, isActive, isFeatured } = body;
 
     if (!productId) {
       return NextResponse.json({ error: "productId is required" }, { status: 400 });
@@ -115,9 +123,15 @@ export async function PUT(req: Request) {
 
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
-    if (price !== undefined) updates.price = price;
+    if (price !== undefined) {
+      if (price <= 0) {
+        return NextResponse.json({ error: "price must be greater than 0" }, { status: 400 });
+      }
+      updates.price = price;
+    }
     if (category !== undefined) updates.category = category;
     if (isActive !== undefined) updates.isActive = isActive;
+    if (isFeatured !== undefined) updates.isFeatured = isFeatured;
 
     const product = await Product.findByIdAndUpdate(productId, updates, { new: true });
     if (!product) {

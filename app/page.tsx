@@ -4,15 +4,21 @@ import { useState, useEffect } from 'react';
 import { UserLayout } from '@/app/shared/layouts/UserLayout';
 import { useAuth } from '@/context/AuthContext';
 
+interface Product {
+  _id: string;
+  title: string;
+  images: string[];
+}
+
 interface SiteSettings {
   bannerImageUrl: string;
-  slideshowImages: string[];
   isBannerVisible: boolean;
 }
 
 export default function Page() {
   const { user, loading } = useAuth();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const fetchSettings = async () => {
@@ -29,19 +35,35 @@ export default function Page() {
     }
   };
 
+  const fetchFeaturedProducts = async () => {
+    try {
+      const res = await fetch('/api/products', {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const featured = data.products.filter((p: any) => p.isFeatured && p.isActive && p.images && p.images.length > 0);
+        setFeaturedProducts(featured);
+      }
+    } catch (err) {
+      console.error('Failed to fetch featured products:', err);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
+    fetchFeaturedProducts();
   }, []);
 
   useEffect(() => {
-    // Auto-advance slideshow every 3 seconds
-    if (settings && settings.slideshowImages.length > 1) {
+    // Auto-advance slideshow every 4 seconds
+    if (featuredProducts.length > 1) {
       const interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % settings.slideshowImages.length);
-      }, 3000);
+        setCurrentSlide((prev) => (prev + 1) % featuredProducts.length);
+      }, 4000);
       return () => clearInterval(interval);
     }
-  }, [settings]);
+  }, [featuredProducts]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -63,29 +85,52 @@ export default function Page() {
           </div>
         )}
 
-        {/* Slideshow Section */}
-        {settings?.slideshowImages && settings.slideshowImages.length > 0 && (
+        {/* Slideshow Section - Featured Products */}
+        {featuredProducts.length > 0 && (
           <div style={{ margin: '20px 0' }}>
-            <h2>Featured Collections</h2>
+            <h2>Featured Products</h2>
             <div style={{ position: 'relative', maxWidth: '800px' }}>
-              <img
-                src={settings.slideshowImages[currentSlide]}
-                alt={`Slide ${currentSlide + 1}`}
-                style={{ width: '100%', height: 'auto' }}
-              />
-              <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                {settings.slideshowImages.map((_, index) => (
+              <div style={{ 
+                position: 'relative',
+                width: '100%',
+                height: '500px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+              }}>
+                <img
+                  src={featuredProducts[currentSlide].images[0]}
+                  alt={featuredProducts[currentSlide].title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  padding: '16px',
+                  textAlign: 'center',
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '24px' }}>{featuredProducts[currentSlide].title}</h3>
+                </div>
+              </div>
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                {featuredProducts.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentSlide(index)}
                     style={{
                       margin: '0 5px',
-                      padding: '5px 10px',
-                      background: index === currentSlide ? '#333' : '#ccc',
-                      color: index === currentSlide ? '#fff' : '#000',
-                      border: 'none',
+                      padding: '6px 12px',
+                      background: index === currentSlide ? '#1f2937' : '#4b5563',
+                      color: '#ffffff',
+                      border: '1px solid #111827',
+                      borderRadius: '6px',
                       cursor: 'pointer',
                     }}
+                    aria-label={`Go to ${featuredProducts[index].title}`}
                   >
                     {index + 1}
                   </button>

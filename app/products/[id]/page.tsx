@@ -13,8 +13,7 @@ interface Product {
   description: string;
   price: number;
   category: string;
-  imageUrl: string;
-  images?: string[];
+  images: string[];
   stock: number;
   isOutOfStock: boolean;
 }
@@ -41,6 +40,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [cartMessage, setCartMessage] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
   const [qty, setQty] = useState<number>(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const fetchProduct = async () => {
     try {
@@ -190,19 +190,66 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         <h1>{product.title}</h1>
         
-        {product.imageUrl && (
+        {/* Image Gallery */}
+        {product.images && product.images.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
-            <img
-              src={product.imageUrl}
-              alt={product.title}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '400px',
-                objectFit: 'cover',
-                borderRadius: '4px',
-                border: '1px solid #ddd',
-              }}
-            />
+            {/* Main Image */}
+            <div style={{ 
+              width: '100%',
+              maxWidth: '600px',
+              height: '450px',
+              overflow: 'hidden',
+              borderRadius: '8px',
+              border: '2px solid #ddd',
+              marginBottom: '12px'
+            }}>
+              <img
+                src={product.images[selectedImageIndex]}
+                alt={`${product.title} - Image ${selectedImageIndex + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+            </div>
+            
+            {/* Thumbnail Gallery */}
+            {product.images.length > 1 && (
+              <div style={{ 
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '8px'
+              }}>
+                {product.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      border: selectedImageIndex === index ? '3px solid #007bff' : '2px solid #ddd',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      padding: 0,
+                      background: 'none',
+                    }}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.title} thumbnail ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
         
