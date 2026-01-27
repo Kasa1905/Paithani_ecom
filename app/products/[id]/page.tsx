@@ -165,185 +165,598 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   };
 
   if (loading) {
-    return <UserLayout><div style={{ padding: '20px' }}>Loading product...</div></UserLayout>;
+    return (
+      <UserLayout>
+        <div style={{ 
+          padding: '80px 20px',
+          textAlign: 'center',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          <div style={{ 
+            fontSize: '48px',
+            marginBottom: '20px',
+            animation: 'pulse 1.5s ease-in-out infinite'
+          }}>
+            ⏳
+          </div>
+          <p style={{ fontSize: '18px', color: '#666' }}>Loading product details...</p>
+        </div>
+      </UserLayout>
+    );
   }
 
   if (error || !product) {
     return (
       <UserLayout>
-        <div style={{ padding: '20px' }}>
-          <p style={{ color: 'red' }}>Error: {error || 'Product not found'}</p>
-          <Link href="/products">Back to Products</Link>
+        <div style={{ 
+          padding: '80px 40px',
+          textAlign: 'center',
+          maxWidth: '600px',
+          margin: '0 auto'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>❌</div>
+          <h1 style={{ fontSize: '32px', color: '#dc3545', marginBottom: '16px' }}>
+            Product Not Found
+          </h1>
+          <p style={{ color: '#666', marginBottom: '32px', fontSize: '16px' }}>
+            {error || 'The product you are looking for does not exist or has been removed.'}
+          </p>
+          <Link 
+            href="/products"
+            style={{
+              display: 'inline-block',
+              padding: '12px 32px',
+              backgroundColor: '#1f2937',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              fontWeight: 600,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+          >
+            ← Browse All Products
+          </Link>
         </div>
       </UserLayout>
     );
   }
 
   const outOfStock = product.isOutOfStock || product.stock <= 0;
+  const isLowStock = !outOfStock && product.stock > 0 && product.stock <= 5;
 
   return (
     <UserLayout>
-      <div style={{ padding: '20px', maxWidth: '800px' }}>
-        <Link href="/products" style={{ marginBottom: '20px', display: 'inline-block' }}>
-          ← Back to Products
-        </Link>
+      <div style={{ 
+        padding: '20px',
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
+        {/* Breadcrumb */}
+        <div style={{ 
+          marginBottom: '32px',
+          fontSize: '14px',
+          color: '#666'
+        }}>
+          <Link 
+            href="/products"
+            style={{ 
+              color: '#666',
+              textDecoration: 'none',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#1f2937'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+          >
+            ← Back to Products
+          </Link>
+          <span style={{ margin: '0 8px' }}>/</span>
+          <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{product.title}</span>
+        </div>
 
-        <h1>{product.title}</h1>
-        
-        {/* Image Gallery */}
-        {product.images && product.images.length > 0 && (
-          <div style={{ marginBottom: '20px' }}>
-            {/* Main Image */}
-            <div style={{ 
-              width: '100%',
-              maxWidth: '600px',
-              height: '450px',
-              overflow: 'hidden',
-              borderRadius: '8px',
-              border: '2px solid #ddd',
-              marginBottom: '12px'
-            }}>
-              <img
-                src={product.images[selectedImageIndex]}
-                alt={`${product.title} - Image ${selectedImageIndex + 1}`}
-                style={{
+        {/* Main Product Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '60px',
+          marginBottom: '60px'
+        }}>
+          {/* Left: Images */}
+          <div>
+            {product.images && product.images.length > 0 ? (
+              <div style={{ position: 'sticky', top: '20px' }}>
+                {/* Main Image */}
+                <div style={{ 
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-            </div>
-            
-            {/* Thumbnail Gallery */}
-            {product.images.length > 1 && (
-              <div style={{ 
-                display: 'flex',
-                gap: '8px',
-                overflowX: 'auto',
-                paddingBottom: '8px'
-              }}>
-                {product.images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
+                  height: '600px',
+                  overflow: 'hidden',
+                  borderRadius: '16px',
+                  border: '1px solid #e8e8e8',
+                  marginBottom: '16px',
+                  backgroundColor: '#f5f5f5',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                }}>
+                  <img
+                    src={product.images[selectedImageIndex]}
+                    alt={`${product.title} - Image ${selectedImageIndex + 1}`}
                     style={{
-                      width: '80px',
-                      height: '80px',
-                      border: selectedImageIndex === index ? '3px solid #007bff' : '2px solid #ddd',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      padding: 0,
-                      background: 'none',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
                     }}
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.title} thumbnail ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  </button>
-                ))}
+                  />
+                </div>
+                
+                {/* Thumbnail Gallery */}
+                {product.images.length > 1 && (
+                  <div style={{ 
+                    display: 'flex',
+                    gap: '12px',
+                    overflowX: 'auto',
+                    paddingBottom: '8px'
+                  }}>
+                    {product.images.map((img, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          border: selectedImageIndex === index ? '3px solid #d4a574' : '1px solid #e8e8e8',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          padding: 0,
+                          background: 'none',
+                          flexShrink: 0,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedImageIndex !== index) {
+                            e.currentTarget.style.borderColor = '#d4a574';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedImageIndex !== index) {
+                            e.currentTarget.style.borderColor = '#e8e8e8';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }
+                        }}
+                      >
+                        <img
+                          src={img}
+                          alt={`${product.title} thumbnail ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '600px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#999',
+                fontSize: '18px'
+              }}>
+                No image available
               </div>
             )}
           </div>
-        )}
-        
-        <p style={{ fontSize: '24px', color: '#28a745', fontWeight: 'bold', margin: '20px 0' }}>
-          ₹{product.price.toFixed(2)}
-        </p>
 
-        <p style={{ margin: '6px 0', fontWeight: 600, color: outOfStock ? '#dc3545' : '#28a745' }}>
-          {outOfStock
-            ? 'Out of stock'
-            : product.stock < 5
-              ? `Only ${product.stock} left`
-              : 'In stock'}
-        </p>
+          {/* Right: Product Details */}
+          <div>
+            {/* Category */}
+            <div style={{
+              fontSize: '13px',
+              color: '#999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              fontWeight: 600,
+              marginBottom: '12px'
+            }}>
+              {product.category || 'Paithani Saree'}
+            </div>
 
-        <p style={{ color: '#666', marginBottom: '10px' }}>
-          Category: {product.category}
-        </p>
+            {/* Title */}
+            <h1 style={{
+              fontSize: '40px',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              marginBottom: '20px',
+              lineHeight: 1.2
+            }}>
+              {product.title}
+            </h1>
 
-        <div style={{ marginBottom: '20px', lineHeight: '1.6' }}>
-          <h3>Description</h3>
-          <p>{product.description}</p>
-        </div>
+            {/* Price */}
+            <div style={{ 
+              fontSize: '36px', 
+              color: '#1f2937', 
+              fontWeight: 700, 
+              marginBottom: '24px'
+            }}>
+              ₹{product.price.toLocaleString()}
+            </div>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label htmlFor="qty" style={{ color: '#333' }}>Qty</label>
-            <input
-              id="qty"
-              type="number"
-              min={1}
-              max={product.stock}
-              value={qty}
-              onChange={(e) => {
-                const val = Math.floor(Number(e.target.value) || 1);
-                setQty(Math.max(1, Math.min(val, product.stock)));
-              }}
-              style={{ width: '70px', padding: '8px' }}
-              disabled={outOfStock}
-            />
+            {/* Stock Status */}
+            <div style={{ 
+              marginBottom: '32px',
+              padding: '16px 20px',
+              backgroundColor: outOfStock ? '#fff5f5' : isLowStock ? '#fff3cd' : '#f0fdf4',
+              border: `1px solid ${outOfStock ? '#fecaca' : isLowStock ? '#ffc107' : '#86efac'}`,
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '20px' }}>
+                {outOfStock ? '❌' : isLowStock ? '⚠️' : '✅'}
+              </span>
+              <span style={{ 
+                fontWeight: 600,
+                color: outOfStock ? '#dc3545' : isLowStock ? '#856404' : '#166534',
+                fontSize: '16px'
+              }}>
+                {outOfStock
+                  ? 'Out of Stock'
+                  : isLowStock
+                    ? `Only ${product.stock} left in stock - Order soon!`
+                    : 'In Stock - Ready to Ship'}
+              </span>
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ 
+                fontSize: '18px', 
+                fontWeight: 600, 
+                marginBottom: '12px',
+                color: '#1a1a1a'
+              }}>
+                Description
+              </h3>
+              <p style={{ 
+                color: '#666', 
+                lineHeight: 1.8,
+                fontSize: '16px'
+              }}>
+                {product.description}
+              </p>
+            </div>
+
+            {/* Quantity and Actions */}
+            <div style={{ 
+              marginBottom: '32px',
+              padding: '24px',
+              backgroundColor: '#fafafa',
+              borderRadius: '12px',
+              border: '1px solid #e8e8e8'
+            }}>
+              {/* Quantity Selector */}
+              <div style={{ marginBottom: '20px' }}>
+                <label 
+                  htmlFor="qty" 
+                  style={{ 
+                    display: 'block',
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                    fontSize: '15px',
+                    color: '#1a1a1a'
+                  }}
+                >
+                  Quantity
+                </label>
+                <input
+                  id="qty"
+                  type="number"
+                  min={1}
+                  max={product.stock}
+                  value={qty}
+                  onChange={(e) => {
+                    const val = Math.floor(Number(e.target.value) || 1);
+                    setQty(Math.max(1, Math.min(val, product.stock)));
+                  }}
+                  style={{ 
+                    width: '120px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    border: '1px solid #d0d0d0',
+                    backgroundColor: 'white'
+                  }}
+                  disabled={outOfStock}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addingToCart || placingOrder || outOfStock || !isAuthenticated}
+                  style={{
+                    padding: '16px 32px',
+                    backgroundColor: outOfStock || !isAuthenticated ? '#9ca3af' : '#1f2937',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: addingToCart || placingOrder || outOfStock || !isAuthenticated ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!addingToCart && !placingOrder && !outOfStock && isAuthenticated) {
+                      e.currentTarget.style.backgroundColor = '#374151';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1f2937';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {addingToCart ? '⏳ Adding to Cart...' : '🛒 Add to Cart'}
+                </button>
+
+                <button
+                  onClick={handleBuyNow}
+                  disabled={placingOrder || addingToCart || outOfStock || !isAuthenticated}
+                  style={{
+                    padding: '16px 32px',
+                    backgroundColor: outOfStock || !isAuthenticated ? '#9ca3af' : '#d4a574',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: placingOrder || addingToCart || outOfStock || !isAuthenticated ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                    boxShadow: '0 2px 8px rgba(212, 165, 116, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!placingOrder && !addingToCart && !outOfStock && isAuthenticated) {
+                      e.currentTarget.style.backgroundColor = '#c19565';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#d4a574';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {placingOrder ? '⏳ Processing...' : '⚡ Buy Now'}
+                </button>
+              </div>
+
+              {!isAuthenticated && (
+                <p style={{ 
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '6px',
+                  color: '#856404',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}>
+                  Please <Link href="/login" style={{ color: '#856404', fontWeight: 600 }}>login</Link> to add items to cart
+                </p>
+              )}
+
+              {cartMessage && (
+                <p style={{ 
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: cartMessage.includes('success') ? '#f0fdf4' : '#fff5f5',
+                  border: `1px solid ${cartMessage.includes('success') ? '#86efac' : '#fecaca'}`,
+                  borderRadius: '6px',
+                  color: cartMessage.includes('success') ? '#166534' : '#dc2626',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  textAlign: 'center'
+                }}>
+                  {cartMessage}
+                </p>
+              )}
+            </div>
+
+            {/* Trust Badges */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+              padding: '20px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '1px solid #e8e8e8'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>🛡️</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a1a' }}>
+                    Quality Guaranteed
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    Authentic silk
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>🚚</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a1a' }}>
+                    Free Shipping
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    On all orders
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>↩️</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a1a' }}>
+                    Easy Returns
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    7-day policy
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>🔒</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a1a' }}>
+                    Secure Payment
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    100% protected
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={handleAddToCart}
-            disabled={addingToCart || placingOrder || outOfStock}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: outOfStock ? '#6c757d' : isAuthenticated ? '#28a745' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: addingToCart || placingOrder || outOfStock ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-            }}
-          >
-            {addingToCart ? 'Adding...' : 'Add to Cart'}
-          </button>
-
-          <button
-            onClick={handleBuyNow}
-            disabled={placingOrder || addingToCart || outOfStock}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: outOfStock ? '#6c757d' : isAuthenticated ? '#007bff' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: placingOrder || addingToCart || outOfStock ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-            }}
-          >
-            {placingOrder ? 'Placing Order...' : 'Buy Now'}
-          </button>
         </div>
 
-        {outOfStock && (
-          <p style={{ marginTop: '8px', color: '#dc3545' }}>
-            This item is currently out of stock.
-          </p>
-        )}
-
-        {cartMessage && (
-          <p style={{ 
-            marginTop: '10px', 
-            color: cartMessage.includes('success') ? '#28a745' : '#dc3545' 
+        {/* Additional Information Sections */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '32px',
+          marginBottom: '60px'
+        }}>
+          {/* Fabric Details */}
+          <div style={{
+            padding: '32px',
+            backgroundColor: '#fafafa',
+            borderRadius: '16px',
+            border: '1px solid #e8e8e8'
           }}>
-            {cartMessage}
-          </p>
-        )}
+            <h3 style={{ 
+              fontSize: '22px', 
+              fontWeight: 600, 
+              marginBottom: '20px',
+              color: '#1a1a1a',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span>✨</span> Fabric Details
+            </h3>
+            <div style={{ color: '#666', lineHeight: 1.8, fontSize: '15px' }}>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Material:</strong> Pure Silk
+              </p>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Weave:</strong> Traditional Paithani handloom
+              </p>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Zari:</strong> Authentic gold/silver thread
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Care:</strong> Dry clean only
+              </p>
+            </div>
+          </div>
 
-        {!isAuthenticated && (
-          <p style={{ marginTop: '10px', color: '#666' }}>
-            Please <Link href="/login">login</Link> to add items to cart
-          </p>
-        )}
+          {/* Delivery Info */}
+          <div style={{
+            padding: '32px',
+            backgroundColor: '#fafafa',
+            borderRadius: '16px',
+            border: '1px solid #e8e8e8'
+          }}>
+            <h3 style={{ 
+              fontSize: '22px', 
+              fontWeight: 600, 
+              marginBottom: '20px',
+              color: '#1a1a1a',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span>📦</span> Delivery & Returns
+            </h3>
+            <div style={{ color: '#666', lineHeight: 1.8, fontSize: '15px' }}>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Delivery:</strong> 5-7 business days
+              </p>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Returns:</strong> 7 days from delivery
+              </p>
+              <p style={{ marginBottom: '12px' }}>
+                <strong>Exchange:</strong> Available for size/color
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Packaging:</strong> Premium gift box included
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Care Instructions */}
+        <div style={{
+          padding: '40px',
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e8e8e8',
+          marginBottom: '40px'
+        }}>
+          <h3 style={{ 
+            fontSize: '26px', 
+            fontWeight: 600, 
+            marginBottom: '24px',
+            color: '#1a1a1a',
+            textAlign: 'center'
+          }}>
+            Care Instructions
+          </h3>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '24px'
+          }}>
+            {[
+              { icon: '🧼', text: 'Dry clean only - Do not wash at home' },
+              { icon: '☀️', text: 'Avoid direct sunlight for storage' },
+              { icon: '🏠', text: 'Store in cool, dry place' },
+              { icon: '👔', text: 'Iron on reverse with low heat' }
+            ].map((item, index) => (
+              <div 
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '20px',
+                  backgroundColor: '#fafafa',
+                  borderRadius: '12px'
+                }}
+              >
+                <span style={{ fontSize: '32px' }}>{item.icon}</span>
+                <span style={{ color: '#666', fontSize: '15px', lineHeight: 1.5 }}>
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </UserLayout>
   );

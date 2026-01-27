@@ -170,26 +170,57 @@ export default function CartPage() {
         <h1>Shopping Cart</h1>
 
         {cartItems.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginTop: '40px' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🛒</div>
-            <h2 style={{ marginBottom: '10px', color: '#333' }}>Your cart is empty</h2>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '30px' }}>
-              Looks like you haven&apos;t added any items to your cart yet.
+          <div style={{ 
+            textAlign: 'center',
+            padding: '80px 40px',
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            marginTop: '40px',
+            border: '2px dashed #e8e8e8'
+          }}>
+            <div style={{ fontSize: '80px', marginBottom: '24px' }}>🛒</div>
+            <h2 style={{ 
+              marginBottom: '16px',
+              color: '#1a1a1a',
+              fontSize: '32px',
+              fontWeight: 600
+            }}>
+              Your Cart is Empty
+            </h2>
+            <p style={{ 
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '32px',
+              lineHeight: 1.6,
+              maxWidth: '400px',
+              margin: '0 auto 32px'
+            }}>
+              Discover beautiful handcrafted Paithani sarees and add them to your cart
             </p>
             <Link 
               href="/products"
               style={{
+                display: 'inline-block',
                 padding: '14px 32px',
-                backgroundColor: '#007bff',
+                backgroundColor: '#d4a574',
                 color: 'white',
                 textDecoration: 'none',
-                borderRadius: '6px',
-                display: 'inline-block',
+                borderRadius: '8px',
+                fontWeight: 600,
                 fontSize: '16px',
-                fontWeight: '500',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(212, 165, 116, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#c19565';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#d4a574';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              Start Shopping
+              Browse Our Collection
             </Link>
           </div>
         ) : (

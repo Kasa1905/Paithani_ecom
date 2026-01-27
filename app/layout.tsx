@@ -17,7 +17,7 @@ export default function RootLayout({
       <body>
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <Providers>
-          <main id="main-content" role="main">
+          <main id="main-content" role="main" className="page-shell">
             {children}
           </main>
         </Providers>

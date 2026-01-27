@@ -1,11 +1,12 @@
 .adminHeader {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: white;
+  background: #ffffff;
+  color: #1a1a1a;
   padding: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .adminNav {
@@ -20,7 +21,7 @@
 
 .brand {
   text-decoration: none;
-  color: white;
+  color: #1a1a1a;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -30,15 +31,16 @@
 
 .brand h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
 }
 
 .navList {
   display: flex;
   list-style: none;
-  gap: 0;
+  gap: 0.5rem;
   margin: 0;
   padding: 0;
   flex: 1;
@@ -54,19 +56,20 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: #666;
   text-decoration: none;
-  padding: 1rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 1.125rem 1.25rem;
+  font-size: 0.9375rem;
   font-weight: 500;
-  transition: all 0.3s ease;
-  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
   white-space: nowrap;
 }
 
 .navLink:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-bottom-color: #4CAF50;
+  color: #1a1a1a;
+  background-color: #fafafa;
+  border-bottom-color: #d4a574;
 }
 
 .subMenu {
@@ -74,13 +77,16 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: #0f3460;
+  background: #ffffff;
   list-style: none;
   margin: 0;
   padding: 0.5rem 0;
-  min-width: 180px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  margin-top: 4px;
 }
 
 .navItem:hover .subMenu {
@@ -93,38 +99,41 @@
 
 .subMenu li a {
   display: block;
-  color: white;
+  color: #666;
   text-decoration: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
   transition: all 0.2s ease;
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
+  font-weight: 500;
 }
 
 .subMenu li a:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-left-color: #4CAF50;
-  padding-left: 1.75rem;
+  background-color: #fafafa;
+  border-left-color: #d4a574;
+  color: #1a1a1a;
+  padding-left: 1.375rem;
 }
 
 .logoutBtn {
   background: none;
   border: none;
-  color: white;
-  padding: 1rem 1.5rem;
-  font-size: 0.95rem;
+  color: #dc3545;
+  padding: 1.125rem 1.25rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
+  border-radius: 6px;
 }
 
 .logoutBtn:hover {
-  background-color: rgba(255, 68, 68, 0.2);
-  border-radius: 4px;
+  background-color: #fee;
+  color: #c82333;
 }
 
 /* Responsive Design */
@@ -138,7 +147,7 @@
   .brand {
     width: 100%;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e8e8e8;
   }
 
   .navList {
@@ -154,8 +163,8 @@
   .navLink,
   .logoutBtn {
     width: 100%;
-    padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.875rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
     font-size: 0.9rem;
   }
 
@@ -163,7 +172,9 @@
     position: static;
     display: none;
     box-shadow: none;
-    background: rgba(0, 0, 0, 0.2);
+    background: #fafafa;
+    border: none;
+    border-radius: 0;
   }
 
   .navItem:hover .subMenu {
@@ -175,9 +186,9 @@
   }
 
   .subMenu li a {
-    padding: 0.5rem 2rem;
+    padding: 0.625rem 2rem;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #e8e8e8;
   }
 
   .subMenu li a:hover {

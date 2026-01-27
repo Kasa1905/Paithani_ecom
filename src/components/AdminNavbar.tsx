@@ -71,6 +71,13 @@ export default function AdminNavbar() {
             </Link>
           </li>
 
+          {/* Analytics */}
+          <li className={styles.navItem}>
+            <Link href="/admin/analytics" className={styles.navLink}>
+              📊 Analytics
+            </Link>
+          </li>
+
           {/* Logout */}
           <li className={styles.navItem}>
             <button onClick={handleLogout} className={styles.logoutBtn}>
