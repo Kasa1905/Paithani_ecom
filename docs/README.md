@@ -103,8 +103,8 @@ src/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Kasa1905/Paithani_ecom_Kasa.git
-cd Paithani_ecom_Kasa
+git clone https://github.com/Kasa1905/Paithani_ecom.git
+cd Paithani_ecom
 ```
 
 2. Install dependencies:
